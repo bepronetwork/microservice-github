@@ -1,4 +1,4 @@
-import { Octokit } from 'octokit';
+const Octokit = require('octokit').Octokit;
 const githubConfig = require('../config/github.config');
 const octokit = new Octokit({ auth: githubConfig.githubToken });
 
