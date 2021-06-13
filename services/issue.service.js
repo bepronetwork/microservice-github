@@ -13,6 +13,7 @@ module.exports = class IssueService {
       title: githubIssue.title,
       body: githubIssue.body,
       numberOfComments: githubIssue.comments,
+      developers: issue.developers,
     }
   }
 };

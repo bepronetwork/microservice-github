@@ -26,7 +26,7 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
     whereCondition.state = req.body.filterState;
   }
 
-  const issues = await models.issue.findAll({ where: whereCondition });
+  const issues = await models.issue.findAll({ where: whereCondition, include: ['developers'] });
 
   const listOfIssues = [];
   for (const issue of issues) {
@@ -42,7 +42,8 @@ router.get('/:id', asyncMiddleware(async (req, res, next) => {
     {
       where: {
         issueId: req.params.id
-      }
+      },
+      include: ['developers']
     });
   return res.json(await IssueService.getIssueData(issue));
 }));
@@ -53,7 +54,8 @@ router.get('/github/:id', asyncMiddleware(async (req, res, next) => {
     {
       where: {
         githubId: req.params.id
-      }
+      },
+      include: ['developers']
     });
   return res.json(await IssueService.getIssueData(issue));
 }));

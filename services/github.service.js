@@ -38,4 +38,16 @@ module.exports = class GithubService {
 
     return data.data
   }
+
+  static async createComment(issueId, comment) {
+    // Create comment
+    const data = await octokit.rest.issues.createComment({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+      issue_number: issueId,
+      body: comment,
+    });
+
+    return data.data;
+  }
 };
