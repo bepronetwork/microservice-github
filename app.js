@@ -4,7 +4,8 @@ const path = require('path');
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 
-const indexRoutes = require('./routes/index');
+const indexRoutes = require('./routes/index.route');
+const issuesRoutes = require('./routes/issue.route');
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 
 app.use('/', indexRoutes);
+app.use('/issues', issuesRoutes);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

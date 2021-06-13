@@ -1,5 +1,5 @@
 import { Octokit } from 'octokit';
-const githubConfig = require('../config/github');
+const githubConfig = require('../config/github.config');
 const octokit = new Octokit({ auth: githubConfig.githubToken });
 
 module.exports = class GithubService {
