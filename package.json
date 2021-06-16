@@ -1,6 +1,7 @@
 {
   "name": "microservice-github",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Microservice that connects github information with the Smart Contract of the Network",
   "private": true,
   "main": "bin/www",
   "engines": {
@@ -11,6 +12,7 @@
     "start": "nodemon ./bin/www",
     "migrate": "node_modules/.bin/sequelize db:migrate",
     "migrate:undo": "node_modules/.bin/sequelize db:migrate:undo"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
