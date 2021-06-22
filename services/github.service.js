@@ -4,13 +4,13 @@ const octokit = new Octokit({ auth: githubConfig.githubToken });
 
 module.exports = class GithubService {
 
-  static async createIssue(title, body) {
+  static async createIssue(title, description) {
     // Create issue
     const data = await octokit.rest.issues.create({
       owner: githubConfig.githubOwner,
       repo: githubConfig.githubRepo,
       title,
-      body,
+      body: description,
       labels: ['draf']
     });
 
@@ -46,6 +46,23 @@ module.exports = class GithubService {
       repo: githubConfig.githubRepo,
       issue_number: issueId,
       body: comment,
+    });
+
+    return data.data;
+  }
+
+  static async createPullRequest(title, description, username) {
+    // Create pull request
+    const data = await octokit.rest.pulls.create({
+      accept: 'application/vnd.github.v3+json',
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+      title,
+      body: description,
+      head: `${username}:${githubConfig.githubMainBranch}`,
+      base: githubConfig.githubMainBranch,
+      maintainer_can_modify: false,
+      draft: false
     });
 
     return data.data;
