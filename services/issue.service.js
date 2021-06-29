@@ -15,6 +15,7 @@ module.exports = class IssueService {
       numberOfComments: githubIssue.comments,
       developers: issue.developers,
       pullRequests: issue.pullRequests,
+      mergeProposals: issue.mergeProposals,
     }
   }
 };

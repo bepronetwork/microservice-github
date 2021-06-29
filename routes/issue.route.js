@@ -6,7 +6,7 @@ const GithubService = require('../services/github.service');
 const models = require('../models');
 
 
-const includeIssues = ['developers', 'pullRequests'];
+const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
 
 /* POST create issue. */
 router.post('/', asyncMiddleware(async (req, res, next) => {
@@ -90,6 +90,30 @@ router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
 
   issue.state = 'ready';
   await issue.save();
+
+  return res.json('ok');
+}));
+
+/* POST create Merge proposal for issue. */
+router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
+  const issue = await models.issue.findOne(
+    {
+      where: {
+        issueId: req.params.id
+      },
+    });
+  const pullRequest = await models.pullRequest.findOne(
+    {
+      where: {
+        githubId: req.body.pullRequestGithubId,
+      },
+    });
+
+  await models.mergeProposal.create({
+    scMergeId: req.body.scMergeId,
+    issueId: issue.id,
+    pullRequestId: pullRequest.id,
+  });
 
   return res.json('ok');
 }));

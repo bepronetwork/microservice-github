@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'issueId',
         sourceKey: 'id'
       });
+      models.issue.hasMany(models.mergeProposal, {
+        foreignKey: 'issueId',
+        sourceKey: 'id'
+      });
     }
   };
   Issue.init({
