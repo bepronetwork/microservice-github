@@ -5,6 +5,9 @@ const IssueService = require('../services/issue.service');
 const GithubService = require('../services/github.service');
 const models = require('../models');
 
+
+const includeIssues = ['developers', 'pullRequests'];
+
 /* POST create issue. */
 router.post('/', asyncMiddleware(async (req, res, next) => {
   const gitbubIssue = await GithubService.createIssue(req.body.title, req.body.description);
@@ -29,7 +32,7 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
     whereCondition.issueId = req.query.issueIds;
   }
 
-  const issues = await models.issue.findAll({ where: whereCondition, include: ['developers'] });
+  const issues = await models.issue.findAll({ where: whereCondition, include: includeIssues });
 
   const listOfIssues = [];
   for (const issue of issues) {
@@ -46,7 +49,7 @@ router.get('/:id', asyncMiddleware(async (req, res, next) => {
       where: {
         issueId: req.params.id
       },
-      include: ['developers']
+      include: includeIssues,
     });
   return res.json(await IssueService.getIssueData(issue));
 }));
@@ -58,7 +61,7 @@ router.get('/github/:id', asyncMiddleware(async (req, res, next) => {
       where: {
         githubId: req.params.id
       },
-      include: ['developers']
+      include: includeIssues,
     });
   return res.json(await IssueService.getIssueData(issue));
 }));
@@ -68,6 +71,27 @@ router.get('/github/:id/comments', asyncMiddleware(async (req, res, next) => {
   const githubComments = await GithubService.getIssueComments(req.params.id);
 
   return res.json(githubComments);
+}));
+
+/* POST create PR for issue. */
+router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
+  const issue = await models.issue.findOne(
+    {
+      where: {
+        issueId: req.params.id
+      },
+    });
+
+  const githubPR = await GithubService.createPullRequest(req.body.title, req.body.description, req.body.username);
+  await models.pullRequest.create({
+    issueId: issue.id,
+    githubId: githubPR.number,
+  });
+
+  issue.state = 'ready';
+  await issue.save();
+
+  return res.json('ok');
 }));
 
 module.exports = router;
