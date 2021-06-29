@@ -25,6 +25,9 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
   if (req.body.filterState) {
     whereCondition.state = req.body.filterState;
   }
+  if (req.query.issueIds) {
+    whereCondition.issueId = req.query.issueIds;
+  }
 
   const issues = await models.issue.findAll({ where: whereCondition, include: ['developers'] });
 
