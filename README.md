@@ -23,7 +23,7 @@ Copy .env.example to .env
 ```bash
 cp .env.example .env
 ```
-and fill the github repo settings
+and fill the missing settings
 Then:
 ```bash
 npm start
