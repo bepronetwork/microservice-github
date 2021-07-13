@@ -7,6 +7,7 @@ module.exports = class BeproService {
     try {
       const beproNetwork = new Network({
         contractAddress: networkConfig.contractAddress,
+        test: true,
         opt: {
           web3Connection: networkConfig.web3Connection,
           privateKey: networkConfig.privateKey,
@@ -38,13 +39,6 @@ module.exports = class BeproService {
           console.log('error', error);
         });
 
-      contract.events.DisputeMerge({}, async (error, event) => {
-        const isMergeDisputed = await beproNetwork.isMergeDisputed({ issueId: event.issueId, mergeId: event.mergeId });
-        if (isMergeDisputed) {
-          // merge pull request and close issue
-
-        }
-      });
     } catch (error) {
       console.log('###########################');
       console.log('error:', error);

@@ -6,7 +6,8 @@ const bodyParser = require('body-parser');
 
 const indexRoutes = require('./routes/index.route');
 const issuesRoutes = require('./routes/issue.route');
-const developerRoutes = require('./routes/developer.route');
+const developersRoutes = require('./routes/developer.route');
+const usersRoutes = require('./routes/user.route');
 const BeproService = require('./services/bepro.service');
 
 const app = express();
@@ -30,7 +31,8 @@ app.use(cors());
 
 app.use('/', indexRoutes);
 app.use('/issues', issuesRoutes);
-app.use('/developers', developerRoutes);
+app.use('/developers', developersRoutes);
+app.use('/users', usersRoutes);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
