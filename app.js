@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const indexRoutes = require('./routes/index.route');
 const issuesRoutes = require('./routes/issue.route');
 const developerRoutes = require('./routes/developer.route');
+const BeproService = require('./services/bepro.service');
 
 const app = express();
 
@@ -15,6 +16,10 @@ const cors = require('cors');
 // view engine setup
 // app.set('views', path.join(__dirname, 'views'));
 // app.set('view engine', 'jade');
+
+
+BeproService.listenEvents();
+
 
 app.use(logger('dev'));
 app.use(bodyParser.json());

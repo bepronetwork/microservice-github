@@ -14,6 +14,8 @@ module.exports = class IssueService {
       body: githubIssue.body,
       numberOfComments: githubIssue.comments,
       developers: issue.developers,
+      pullRequests: issue.pullRequests,
+      mergeProposals: issue.mergeProposals,
     }
   }
 };

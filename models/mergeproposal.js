@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Issue extends Model {
+  class MergeProposal extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -11,27 +11,24 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      models.issue.hasMany(models.developer, {
+      models.mergeProposal.belongsTo(models.issue, {
         foreignKey: 'issueId',
         sourceKey: 'id'
       });
-      models.issue.hasMany(models.pullRequest, {
-        foreignKey: 'issueId',
-        sourceKey: 'id'
-      });
-      models.issue.hasMany(models.mergeProposal, {
-        foreignKey: 'issueId',
+      models.mergeProposal.belongsTo(models.pullRequest, {
+        foreignKey: 'pullRequestId',
         sourceKey: 'id'
       });
     }
   };
-  Issue.init({
+  MergeProposal.init({
+    scMergeId: DataTypes.STRING,
     issueId: DataTypes.INTEGER,
-    githubId: DataTypes.STRING,
-    state: DataTypes.STRING,
+    pullRequestId: DataTypes.INTEGER,
   }, {
     sequelize,
-    modelName: 'issue',
+    modelName: 'mergeProposal',
+    tableName: 'merge_proposals',
   });
-  return Issue;
+  return MergeProposal;
 };
