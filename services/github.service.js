@@ -11,7 +11,31 @@ module.exports = class GithubService {
       repo: githubConfig.githubRepo,
       title,
       body: description,
-      labels: ['draf']
+      labels: ['draft']
+    });
+
+    return data.data;
+  }
+
+  static async closeIssue(issueId) {
+    // Close issue
+    const data = await octokit.rest.issues.update({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+      issue_number: issueId,
+      state: 'closed',
+    });
+
+    return data.data;
+  }
+
+  static async removeDraftLabelFromIssue(issueId) {
+    // Remove Draft label from issue
+    const data = await octokit.rest.issues.removeLabel({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+      issue_number: issueId,
+      name: 'draft'
     });
 
     return data.data;
@@ -63,6 +87,17 @@ module.exports = class GithubService {
       base: githubConfig.githubMainBranch,
       maintainer_can_modify: false,
       draft: false
+    });
+
+    return data.data;
+  }
+
+  static async mergePullRequest(pullRequestNumber) {
+    // Merge pull request
+    const data = await octokit.rest.pulls.merge({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+      pull_number: pullRequestNumber
     });
 
     return data.data;

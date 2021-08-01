@@ -14,11 +14,11 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
 }));
 
 /* GET get user by address. */
-router.get('/address', asyncMiddleware(async (req, res, next) => {
+router.get('/address/:address', asyncMiddleware(async (req, res, next) => {
   const user = await models.user.findOne(
     {
       where: {
-        address: req.body.address
+        address: req.params.address
       },
     });
 
