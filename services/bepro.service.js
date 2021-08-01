@@ -1,5 +1,7 @@
 const Network = require('bepro-js').Network;
 const networkConfig = require('../config/network.config');
+const models = require('../models');
+const GithubService = require('../services/github.service');
 
 module.exports = class BeproService {
 
@@ -7,6 +9,7 @@ module.exports = class BeproService {
     try {
       const beproNetwork = new Network({
         contractAddress: networkConfig.contractAddress,
+        test: true,
         opt: {
           web3Connection: networkConfig.web3Connection,
           privateKey: networkConfig.privateKey,
@@ -17,34 +20,67 @@ module.exports = class BeproService {
 
       const contract = beproNetwork.getWeb3Contract();
 
-      contract.events.OpenIssue({}, (error, event) => {
-        console.log('LISTENING TO EVENTS');
-        console.log('error:', error);
-        console.log(event);
+      contract.events.CloseIssue({}, (error, event) => {
+        if (error) {
+          console.log('error:', error);
+          console.log(event);
+        }
       })
-        .on("connected", function (subscriptionId) {
-          console.log('connected:');
-          console.log(subscriptionId);
+        .on('connected', () => {
+          console.log('connected close issue');
         })
-        .on('data', function (event) {
-          console.log('data:');
-          console.log(event); // same results as the optional callback above
-        })
-        .on('changed', function (event) {
-          console.log('changed:', event);
+        .on('data', async (event) => {
+          const eventData = event.returnValues;
+          // Merge PR and close issue on github
+          const issue = await models.issue.findOne(
+            {
+              where: {
+                issueId: eventData.id,
+              },
+              include: ['mergeProposals'],
+            });
 
+
+          const mergeProposal = issue.mergeProposals.find((mp) => mp.scMergeId = eventData.mergeID);
+
+          const pullRequest = await mergeProposal.getPullRequest();
+
+          await GithubService.mergePullRequest(pullRequest.githubId);
+          await GithubService.closeIssue(issue.githubId);
+          issue.state = 'closed';
+          await issue.save();
         })
-        .on('error', function (error, receipt) {
+        .on('error', (error, receipt) => {
           console.log('error', error);
         });
 
-      contract.events.DisputeMerge({}, async (error, event) => {
-        const isMergeDisputed = await beproNetwork.isMergeDisputed({ issueId: event.issueId, mergeId: event.mergeId });
-        if (isMergeDisputed) {
-          // merge pull request and close issue
-
+      contract.events.RedeemIssue({}, (error, event) => {
+        if (error) {
+          console.log('error:', error);
+          console.log(event);
         }
-      });
+      })
+        .on("connected", () => {
+          console.log('connected reedem');
+        })
+        .on('data', async (event) => {
+          const eventData = event.returnValues;
+          // Close issue on github
+          const issue = await models.issue.findOne(
+            {
+              where: {
+                issueId: eventData.id,
+              },
+            });
+
+
+          await GithubService.closeIssue(issue.githubId);
+          issue.state = 'redeemed';
+          await issue.save();
+        })
+        .on('error', (error, receipt) => {
+          console.log('error', error);
+        });
     } catch (error) {
       console.log('###########################');
       console.log('error:', error);

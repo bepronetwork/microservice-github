@@ -15,6 +15,9 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
   await models.issue.create({
     issueId: req.body.issueId,
     githubId: gitbubIssue.number,
+    creatorAddress: req.body.creatorAddress,
+    creatorGithub: req.body.creatorGithub,
+    amount: req.body.amount,
     state: 'draft',
   });
 
