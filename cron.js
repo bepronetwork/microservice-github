@@ -7,7 +7,7 @@ const dayjs = require('dayjs');
 try {
   console.log('starting crons...');
   new CronJob({
-    cronTime: '00 59 12 * * *',
+    cronTime: '00 0 8 * * *',
     onTick: async () => {
       console.log('##### Checking draft issues to move to open');
       const issues = await models.issue.findAll(
