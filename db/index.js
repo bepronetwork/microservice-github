@@ -1,6 +1,20 @@
-const { Client } = require('pg')
-const client = new Client()
-await client.connect()
-const res = await client.query('SELECT $1::text as message', ['Hello world!'])
-console.log(res.rows[0].message) // Hello world!
-await client.end()
+//import db client
+import { Client } from 'pg';
+
+class DB{
+
+    constructor(){
+        this.client = new Client({});
+    }
+
+    start = async () => {
+        await this.client.connect();
+    }
+
+    end = () => {
+        await this.client.end()
+    }
+}
+
+
+export default DB;

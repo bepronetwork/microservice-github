@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/bepronetwork/microservice-github#readme",
   "dependencies": {
+    "dotenv": "^10.0.0",
     "pg": "^8.6.0"
   }
 }
