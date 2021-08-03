@@ -63,6 +63,16 @@ module.exports = class GithubService {
     return data.data
   }
 
+  static async getIssueForks() {
+    // Get Issue comments
+    const data = await octokit.rest.repos.listForks({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+    });
+
+    return data.data
+  }
+
   static async createComment(issueId, comment) {
     // Create comment
     const data = await octokit.rest.issues.createComment({
