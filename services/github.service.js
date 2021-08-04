@@ -112,4 +112,15 @@ module.exports = class GithubService {
 
     return data.data;
   }
+
+  static async getPullRequestCommits(pullRequestNumber) {
+    // Merge pull request
+    const data = await octokit.rest.pulls.listCommits({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+      pull_number: pullRequestNumber
+    });
+
+    return data.data;
+  }
 };
