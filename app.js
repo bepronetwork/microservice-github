@@ -8,6 +8,8 @@ const indexRoutes = require('./routes/index.route');
 const issuesRoutes = require('./routes/issue.route');
 const developersRoutes = require('./routes/developer.route');
 const usersRoutes = require('./routes/user.route');
+const forksRoutes = require('./routes/fork.route');
+const pullRequestsRoutes = require('./routes/pullRequest.route');
 const BeproService = require('./services/bepro.service');
 
 const app = express();
@@ -35,6 +37,8 @@ app.use('/', indexRoutes);
 app.use('/issues', issuesRoutes);
 app.use('/developers', developersRoutes);
 app.use('/users', usersRoutes);
+app.use('/forks', forksRoutes);
+app.use('/pullrequests', pullRequestsRoutes);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

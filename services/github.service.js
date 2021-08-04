@@ -63,6 +63,16 @@ module.exports = class GithubService {
     return data.data
   }
 
+  static async getIssueForks() {
+    // Get Issue comments
+    const data = await octokit.rest.repos.listForks({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+    });
+
+    return data.data
+  }
+
   static async createComment(issueId, comment) {
     // Create comment
     const data = await octokit.rest.issues.createComment({
@@ -95,6 +105,17 @@ module.exports = class GithubService {
   static async mergePullRequest(pullRequestNumber) {
     // Merge pull request
     const data = await octokit.rest.pulls.merge({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+      pull_number: pullRequestNumber
+    });
+
+    return data.data;
+  }
+
+  static async getPullRequestCommits(pullRequestNumber) {
+    // Merge pull request
+    const data = await octokit.rest.pulls.listCommits({
       owner: githubConfig.githubOwner,
       repo: githubConfig.githubRepo,
       pull_number: pullRequestNumber
