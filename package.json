@@ -2,35 +2,33 @@
   "name": "microservice-github",
   "version": "1.0.0",
   "description": "Microservice that connects github information with the Smart Contract of the Network",
-  "main": "index.js",
-  "devDependencies": {
-    "babel-runtime": "^6.26.0",
-    "babel-eslint": "^8.2.6",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-register": "^6.26.0",
-    "babel-cli": "^6.26.0",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-es2017": "^6.24.1",
-    "babel-preset-stage-2": "^6.24.1"
+  "private": true,
+  "main": "bin/www",
+  "engines": {
+    "node": "14"
   },
   "scripts": {
-    "start": "node index",
-    "build": "babel ./src --out-dir lib --copy-files -d ./build",
+    "prestart": "npm run migrate",
+    "start": "nodemon ./bin/www",
+    "migrate": "node_modules/.bin/sequelize db:migrate",
+    "migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bepronetwork/microservice-github.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/bepronetwork/microservice-github/issues"
-  },
-  "homepage": "https://github.com/bepronetwork/microservice-github#readme",
   "dependencies": {
+    "bepro-js": "github:bepronetwork/bepro-js#master",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "cron": "^1.8.2",
+    "dayjs": "^1.10.6",
+    "debug": "^4.3.1",
     "dotenv": "^10.0.0",
-    "pg": "^8.6.0"
+    "express": "^4.17.1",
+    "express-validator": "^6.11.1",
+    "morgan": "^1.10.0",
+    "octokit": "^1.0.5",
+    "pg": "^8.6.0",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^6.6.2",
+    "sequelize-cli": "^6.2.0"
   }
 }
