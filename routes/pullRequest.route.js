@@ -4,7 +4,7 @@ const asyncMiddleware = require('../middlewares/async.middleware');
 const GithubService = require('../services/github.service');
 const models = require('../models');
 
-/* GET Forks for issue. */
+/* GET Participants of a Pull Request. */
 router.get('/:id/participants', asyncMiddleware(async (req, res, next) => {
   const pullRequest = await models.pullRequest.findOne(
     {
