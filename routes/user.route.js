@@ -25,4 +25,11 @@ router.get('/address/:address', asyncMiddleware(async (req, res, next) => {
   return res.json(user);
 }));
 
+/* GET get number of developers connected. */
+router.get('/total', asyncMiddleware(async (req, res, next) => {
+  const userCount = await models.user.count();
+
+  return res.json(userCount);
+}));
+
 module.exports = router;
