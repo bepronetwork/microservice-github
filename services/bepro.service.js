@@ -5,9 +5,11 @@ const GithubService = require('../services/github.service');
 
 module.exports = class BeproService {
 
+  static beproNetwork;
+
   static async listenEvents() {
     try {
-      const beproNetwork = new Network({
+      this.beproNetwork = new Network({
         contractAddress: networkConfig.contractAddress,
         test: true,
         opt: {
@@ -16,9 +18,9 @@ module.exports = class BeproService {
         },
       });
 
-      await beproNetwork.start();
+      await this.beproNetwork.start();
 
-      const contract = beproNetwork.getWeb3Contract();
+      const contract = this.beproNetwork.getWeb3Contract();
 
       contract.events.CloseIssue({}, (error, event) => {
         if (error) {
@@ -85,5 +87,20 @@ module.exports = class BeproService {
       console.log('###########################');
       console.log('error:', error);
     }
+  }
+
+  static async getOpenIssues() {
+    const resp = await this.beproNetwork.getAmountofIssuesOpened();
+    return resp;
+  }
+
+  static async getBEPROStaked() {
+    const resp = await this.beproNetwork.getBEPROStaked();
+    return resp;
+  }
+
+  static async getTokensStaked() {
+    const resp = await this.beproNetwork.getTokensStaked();
+    return resp;
   }
 };
