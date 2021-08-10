@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
   };
   User.init({
     githubHandle: DataTypes.STRING,
+    githubLogin: DataTypes.STRING,
     address: DataTypes.STRING
   }, {
     sequelize,

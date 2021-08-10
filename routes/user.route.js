@@ -7,6 +7,7 @@ const models = require('../models');
 router.post('/connect', asyncMiddleware(async (req, res, next) => {
   await models.user.create({
     githubHandle: req.body.githubHandle,
+    githubLogin: req.body.githubLogin,
     address: req.body.address,
   });
 
