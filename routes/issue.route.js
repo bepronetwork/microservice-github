@@ -28,8 +28,8 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
 router.get('/', asyncMiddleware(async (req, res, next) => {
   const whereCondition = {};
 
-  if (req.body.filterState) {
-    whereCondition.state = req.body.filterState;
+  if (req.query.filterState) {
+    whereCondition.state = req.query.filterState;
   }
   if (req.query.issueIds) {
     whereCondition.issueId = req.query.issueIds;
