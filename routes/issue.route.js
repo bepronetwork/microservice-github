@@ -98,11 +98,12 @@ router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
 }));
 
 /* Get Merge proposal for issue. */
-router.get('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
+router.get('/mergeproposal/:scMergeId/:issueId', asyncMiddleware(async (req, res, next) => {
   const mergeProposal = await models.mergeProposal.findOne(
     {
       where: {
-        scMergeId: req.params.id
+        scMergeId: req.params.scMergeId,
+        issueId: req.params.issueId
       },
     });
 
