@@ -78,23 +78,29 @@ router.get('/github/:id/comments', asyncMiddleware(async (req, res, next) => {
 
 /* POST create PR for issue. */
 router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
-  const issue = await models.issue.findOne(
-    {
-      where: {
-        issueId: req.params.id
-      },
+  try{
+    const issue = await models.issue.findOne(
+      {
+        where: {
+          issueId: req.params.id
+        },
+      });
+  
+    const githubPR = await GithubService.createPullRequest(req.body.title, req.body.description, req.body.username);
+    
+    await models.pullRequest.create({
+      issueId: issue.id,
+      githubId: githubPR.number,
     });
-
-  const githubPR = await GithubService.createPullRequest(req.body.title, req.body.description, req.body.username);
-  await models.pullRequest.create({
-    issueId: issue.id,
-    githubId: githubPR.number,
-  });
-
-  issue.state = 'ready';
-  await issue.save();
-
-  return res.json('ok');
+  
+    issue.state = 'ready';
+    await issue.save();
+  
+    return res.json('ok');
+  }catch(e){
+    console.error(e);
+    res.status(400).json(`failed to create pull request`);
+  }
 }));
 
 /* POST create Merge proposal for issue. */
