@@ -23,34 +23,33 @@ require('./cron');
 // app.set('view engine', 'jade');
 
 
-BeproService.listenEvents();
+BeproService.listenEvents().then(() => {
+  app.use(logger('dev'));
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: false }));
+  app.use(express.static(path.join(__dirname, 'public')));
 
+  app.use(cors());
 
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.use(cors());
-
-app.use('/', indexRoutes);
-app.use('/issues', issuesRoutes);
-app.use('/developers', developersRoutes);
-app.use('/users', usersRoutes);
-app.use('/forks', forksRoutes);
-app.use('/pullrequests', pullRequestsRoutes);
+  app.use('/', indexRoutes);
+  app.use('/issues', issuesRoutes);
+  app.use('/developers', developersRoutes);
+  app.use('/users', usersRoutes);
+  app.use('/forks', forksRoutes);
+  app.use('/pullrequests', pullRequestsRoutes);
 
 // catch 404 and forward to error handler
-app.use((req, res, next) => {
-  return res.status(404).json({ error: 'Route not Found' });
-});
+  app.use((req, res, next) => {
+    return res.status(404).json({ error: 'Route not Found' });
+  });
 
 // error handler
-app.use((err, req, res, next) => {
-  const message = req.app.get('env') === 'development' ? err.message : 'Unknown Error';
+  app.use((err, req, res, next) => {
+    const message = req.app.get('env') === 'development' ? err.message : 'Unknown Error';
 
-  console.log(err);
-  return res.status(err.status || 500).json({ error: message });
+    console.log(err);
+    return res.status(err.status || 500).json({ error: message });
+  });
 });
 
 module.exports = app;
