@@ -103,6 +103,19 @@ router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
   }
 }));
 
+/* Get Merge proposal for issue. */
+router.get('/mergeproposal/:scMergeId/:issueId', asyncMiddleware(async (req, res, next) => {
+  const mergeProposal = await models.mergeProposal.findOne(
+    {
+      where: {
+        scMergeId: req.params.scMergeId,
+        issueId: req.params.issueId
+      },
+    });
+
+  return res.json(mergeProposal);
+}));
+
 /* POST create Merge proposal for issue. */
 router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
   const issue = await models.issue.findOne(
