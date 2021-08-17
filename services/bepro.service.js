@@ -6,101 +6,110 @@ const GithubService = require('../services/github.service');
 module.exports = class BeproService {
 
   static beproNetwork;
+  static starting = false;
 
-  static async listenEvents() {
+  static async start() {
     try {
-      this.beproNetwork = new Network({
+
+      console.log(`Starting Network Service...`);
+      console.table(networkConfig)
+
+      BeproService.beproNetwork = new Network({
         contractAddress: networkConfig.contractAddress,
-        test: true,
+        test: networkConfig.prod,
         opt: {
           web3Connection: networkConfig.web3Connection,
           privateKey: networkConfig.privateKey,
         },
       });
 
-      await this.beproNetwork.start();
+      await BeproService.beproNetwork.start();
 
-      const contract = this.beproNetwork.getWeb3Contract();
-
-      contract.events.CloseIssue({}, (error, event) => {
-        if (error) {
-          console.log('error:', error);
-          console.log(event);
-        }
-      })
-        .on('connected', () => {
-          console.log('connected close issue');
-        })
-        .on('data', async (event) => {
-          const eventData = event.returnValues;
-          // Merge PR and close issue on github
-          const issue = await models.issue.findOne(
-            {
-              where: {
-                issueId: eventData.id,
-              },
-              include: ['mergeProposals'],
-            });
-
-
-          const mergeProposal = issue.mergeProposals.find((mp) => mp.scMergeId = eventData.mergeID);
-
-          const pullRequest = await mergeProposal.getPullRequest();
-
-          await GithubService.mergePullRequest(pullRequest.githubId);
-          await GithubService.closeIssue(issue.githubId);
-          issue.state = 'closed';
-          await issue.save();
-        })
-        .on('error', (error, receipt) => {
-          console.log('error', error);
-        });
-
-      contract.events.RedeemIssue({}, (error, event) => {
-        if (error) {
-          console.log('error:', error);
-          console.log(event);
-        }
-      })
-        .on("connected", () => {
-          console.log('connected reedem');
-        })
-        .on('data', async (event) => {
-          const eventData = event.returnValues;
-          // Close issue on github
-          const issue = await models.issue.findOne(
-            {
-              where: {
-                issueId: eventData.id,
-              },
-            });
-
-
-          await GithubService.closeIssue(issue.githubId);
-          issue.state = 'redeemed';
-          await issue.save();
-        })
-        .on('error', (error, receipt) => {
-          console.log('error', error);
-        });
-    } catch (error) {
-      console.log('###########################');
-      console.log('error:', error);
+      return true;
+    } catch (e) {
+      console.log(`Problem starting...`, e);
+      return false;
     }
   }
 
+  static async readCloseIssue(event) {
+    const eventData = event.returnValues;
+    // Merge PR and close issue on github
+    const issue = await models.issue.findOne({where: {issueId: eventData.id,}, include: ['mergeProposals'],});
+    const mergeProposal = issue.mergeProposals.find((mp) => mp.scMergeId = eventData.mergeID);
+
+    const pullRequest = await mergeProposal.getPullRequest();
+
+    await GithubService.mergePullRequest(pullRequest.githubId);
+    await GithubService.closeIssue(issue.githubId);
+
+    issue.state = 'closed';
+    await issue.save();
+  }
+
+  static async readRedemIssue(event) {
+    const eventData = event.returnValues;
+    // Close issue on github
+    const issue = await models.issue.findOne({where: {issueId: eventData.id,},});
+    await GithubService.closeIssue(issue.githubId);
+    issue.state = 'redeemed';
+    await issue.save();
+  }
+
+  static async listenToEvents() {
+    if (BeproService.starting)
+      return;
+
+    BeproService.starting = +new Date();
+    const started = await this.start();
+    if (!started) return;
+
+    const contract = BeproService.beproNetwork.getWeb3Contract();
+
+    const error = (of = ``) => (error, ev = null) => {
+      console.log(`EventError: ${of}\n`, error, `\n---`, !ev && `Error had no event` || ev);
+      if (error.code === 1006)
+        BeproService.listenToEvents();
+    }
+
+    const connecting = +new Date()
+    const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
+
+    contract.events.CloseIssue({}, error(`closeIssue`))
+      .on(`connected`,() => onConnected(`CloseIssue`))
+      .on(`error`, (err, ev) => error(`CloseIssue`)(err, ev))
+      .on(`data`, (ev) => BeproService.readCloseIssue(ev));
+
+    contract.events.RedeemIssue({}, error(`redeemIssue`))
+      .on(`connected`, () => onConnected(`RedeemIssue`))
+      .on(`error`, error(`RedeemIssue`))
+      .on(`data`, (ev) => BeproService.readRedemIssue(ev));
+
+    console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
+    BeproService.starting = 0;
+  }
+
   static async getOpenIssues() {
-    const resp = await this.beproNetwork.getAmountofIssuesOpened();
-    return resp;
+    return BeproService.beproNetwork.getAmountofIssuesOpened()
+      .catch(e => {
+        console.log(`Error while getOpenIssues`, e)
+        return 0;
+      });
   }
 
   static async getBEPROStaked() {
-    const resp = await this.beproNetwork.getBEPROStaked();
-    return resp;
+    return BeproService.beproNetwork.getBEPROStaked()
+      .catch(e => {
+        console.log(`Error while getBEPROStaked`, e)
+        return 0;
+      });
   }
 
   static async getTokensStaked() {
-    const resp = await this.beproNetwork.getTokensStaked();
-    return resp;
+    return BeproService.beproNetwork.getTokensStaked()
+      .catch(e => {
+        console.log(`Error while getBEPROStaked`, e)
+        return 0;
+      });
   }
 };
