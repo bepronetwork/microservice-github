@@ -16,7 +16,7 @@ module.exports = class BeproService {
 
       BeproService.beproNetwork = new Network({
         contractAddress: networkConfig.contractAddress,
-        test: networkConfig.prod,
+        test: !networkConfig.prod,
         opt: {
           web3Connection: networkConfig.web3Connection,
           privateKey: networkConfig.privateKey,
