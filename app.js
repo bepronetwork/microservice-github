@@ -23,7 +23,7 @@ require('./cron');
 // app.set('view engine', 'jade');
 
 
-BeproService.listenEvents().then(() => {
+BeproService.listenToEvents().then(() => {
   app.use(logger('dev'));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));

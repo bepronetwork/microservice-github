@@ -5,7 +5,8 @@ const GithubService = require('./services/github.service');
 const dayjs = require('dayjs');
 
 try {
-  console.log('starting crons...');
+  console.log('Starting CronJob...');
+  const stamp = +new Date();
   new CronJob({
     cronTime: '00 0 8 * * *',
     onTick: async () => {
@@ -35,6 +36,8 @@ try {
     start: true,
     timeZone: 'Europe/Lisbon'
   });
+
+  console.log(`Started!`, +new Date() - stamp, `ms`);
 } catch (ex) {
   console.log('cron pattern not valid');
 }
