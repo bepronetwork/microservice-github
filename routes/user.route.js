@@ -3,15 +3,32 @@ const router = express.Router();
 const asyncMiddleware = require('../middlewares/async.middleware');
 const models = require('../models');
 
-/* POST connect github handle to address. */
+/* POST connect github handle and githubLogin */
 router.post('/connect', asyncMiddleware(async (req, res, next) => {
   await models.user.create({
     githubHandle: req.body.githubHandle,
     githubLogin: req.body.githubLogin,
-    address: req.body.address,
   });
 
-  return res.json('ok');
+  return res.status(204).json('ok');
+}));
+
+/* PATCH adding address to user with githubHandle */
+router.patch('/connect/:githubHandle', asyncMiddleware(async (req, res, next) => {
+  const user = await models.user.findOne(
+    {
+      where: {
+        githubHandle: req.params.githubHandle
+      },
+    });
+  
+   await user.update({
+      githubHandle: user.githubHandle,
+      githubLogin: user.githubLogin,
+      address: req.body.address
+    })
+
+  return res.status(204).json('ok');
 }));
 
 /* GET get user by address. */
