@@ -85,17 +85,17 @@ router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
           issueId: req.params.id
         },
       });
-  
+
     const githubPR = await GithubService.createPullRequest(req.body.title, req.body.description, req.body.username);
-    
+
     await models.pullRequest.create({
       issueId: issue.id,
       githubId: githubPR.number,
     });
-  
+
     issue.state = 'ready';
     await issue.save();
-  
+
     return res.json('ok');
   }catch(e){
     console.error(e);
@@ -124,10 +124,11 @@ router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
         issueId: req.params.id
       },
     });
+
   const pullRequest = await models.pullRequest.findOne(
     {
       where: {
-        githubId: req.body.pullRequestGithubId,
+        githubId: req.body.pullRequestGithubId.toString(),
       },
     });
 
