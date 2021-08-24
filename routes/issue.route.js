@@ -101,7 +101,7 @@ router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
     if(e.status === 422 && e.response.data.errors) 
       return res.status(e.status).json(e.response.data.errors)
 
-    return res.status(e.status).json(`failed to create pull request`);
+    return res.status(400).json([`failed to create pull request`]);
   }
 }));
 
