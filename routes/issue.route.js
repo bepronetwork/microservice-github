@@ -113,6 +113,7 @@ router.get('/mergeproposal/:scMergeId/:issueId', asyncMiddleware(async (req, res
         scMergeId: req.params.scMergeId,
         issueId: req.params.issueId
       },
+      include: 'pullRequest'
     });
 
   return res.json(mergeProposal);
