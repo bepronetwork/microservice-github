@@ -21,6 +21,7 @@ router.get('/:id/participants', asyncMiddleware(async (req, res, next) => {
     const author = commit.commit.author.name;
     if (!participantsMap.has(author)) {
       const user = await models.user.findOne({ where: { githubHandle: author } });
+      if(user)
       participantsMap.set(author, {
         githubHandle: author,
         address: user && user.address,
