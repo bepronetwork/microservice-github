@@ -98,8 +98,10 @@ router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
 
     return res.json('ok');
   }catch(e){
-    console.error(e);
-    res.status(400).json(`failed to create pull request`);
+    if(e.status === 422 && e.response.data.errors) 
+      return res.status(e.status).json(e.response.data.errors)
+
+    return res.status(400).json(`failed to create pull request`);
   }
 }));
 
@@ -111,6 +113,7 @@ router.get('/mergeproposal/:scMergeId/:issueId', asyncMiddleware(async (req, res
         scMergeId: req.params.scMergeId,
         issueId: req.params.issueId
       },
+      include: 'pullRequest'
     });
 
   return res.json(mergeProposal);
