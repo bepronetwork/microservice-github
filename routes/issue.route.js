@@ -139,6 +139,7 @@ router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
     scMergeId: req.body.scMergeId,
     issueId: issue.id,
     pullRequestId: pullRequest.id,
+    githubLogin: req.body.githubLogin
   });
 
   return res.json('ok');
