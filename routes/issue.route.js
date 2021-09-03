@@ -144,4 +144,16 @@ router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
   return res.json('ok');
 }));
 
+/* GET issue by github login. */
+router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
+  const issue = await models.issue.findOne(
+    {
+      where: {
+        githubId: req.params.ghlogin
+      },
+      include: includeIssues,
+    });
+  return res.json(await IssueService.getIssueData(issue));
+}));
+
 module.exports = router;
