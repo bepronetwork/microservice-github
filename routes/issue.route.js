@@ -10,11 +10,11 @@ const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
 
 /* POST create issue. */
 router.post('/', asyncMiddleware(async (req, res, next) => {
-  const gitbubIssue = await GithubService.createIssue(req.body.title, req.body.description);
+  const githubIssue = await GithubService.createIssue(req.body.title, req.body.description);
 
   await models.issue.create({
     issueId: req.body.issueId,
-    githubId: gitbubIssue.number,
+    githubId: githubIssue.number,
     creatorAddress: req.body.creatorAddress,
     creatorGithub: req.body.creatorGithub,
     amount: req.body.amount,
@@ -146,14 +146,18 @@ router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
 
 /* GET issue by github login. */
 router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
-  const issue = await models.issue.findOne(
-    {
-      where: {
-        githubId: req.params.ghlogin
-      },
-      include: includeIssues,
-    });
-  return res.json(await IssueService.getIssueData(issue));
+  const issues = await models.issue.findAll({ 
+    where:{
+      creatorGithub: req.params.ghlogin
+    }, 
+    include: includeIssues });
+
+  const listOfIssues = [];
+  for (const issue of issues) {
+    listOfIssues.push(await IssueService.getIssueData(issue));
+  }
+
+  return res.json(listOfIssues);
 }));
 
 module.exports = router;
