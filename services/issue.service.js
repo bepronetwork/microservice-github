@@ -21,4 +21,18 @@ module.exports = class IssueService {
       mergeProposals: issue.mergeProposals,
     }
   }
+
+  static async getIssuesData(issues) {
+    const githubIssues = await GithubService.getAllIssues();
+    const getGithubIssue = (issue) => (githubIssues || []).find(i => i.number === +issue.githubId);
+
+    const mergeIssueData = (issue) => {
+      const githubIssue = getGithubIssue(issue);
+      if (!githubIssue)
+        return null;
+      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments});
+    }
+
+    return issues.map(mergeIssueData).filter(issue => !!issue);
+  }
 };

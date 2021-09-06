@@ -35,14 +35,9 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
     whereCondition.issueId = req.query.issueIds;
   }
 
-  const issues = await models.issue.findAll({ where: whereCondition, include: includeIssues });
+  const issues = await models.issue.findAll({ where: whereCondition, include: includeIssues, raw: true, nest: true });
 
-  const listOfIssues = [];
-  for (const issue of issues) {
-    listOfIssues.push(await IssueService.getIssueData(issue));
-  }
-
-  return res.json(listOfIssues);
+  return IssueService.getIssuesData(issues).then(data => res.json(data))
 }));
 
 /* GET issue by issue id. */
@@ -116,7 +111,7 @@ router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
 
     return res.json('ok');
   }catch(e){
-    if(e.status === 422 && e.response.data.errors) 
+    if(e.status === 422 && e.response.data.errors)
       return res.status(e.status).json(e.response.data.errors)
 
     return res.status(400).json([`failed to create pull request`]);
