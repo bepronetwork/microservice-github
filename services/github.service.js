@@ -153,6 +153,7 @@ module.exports = class GithubService {
     return octokit.rest.issues.listForRepo({
       owner: githubConfig.githubOwner,
       repo: githubConfig.githubRepo,
+      state: `all`
     })
       .then(data => data.data)
       .catch(e => {
