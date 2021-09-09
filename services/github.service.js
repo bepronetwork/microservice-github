@@ -148,4 +148,17 @@ module.exports = class GithubService {
       .then(reduced =>
         Object.entries(reduced).slice(-months).reduce(backToObject, {}))
   }
+
+  static async getAllIssues() {
+    return octokit.rest.issues.listForRepo({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+      state: `all`
+    })
+      .then(data => data.data)
+      .catch(e => {
+        console.error(e);
+        return []
+      })
+  }
 };
