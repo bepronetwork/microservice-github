@@ -37,4 +37,24 @@ router.get('/:id/participants', asyncMiddleware(async (req, res, next) => {
   return res.json(participants);
 }));
 
+router.get(`/last/:total`, asyncMiddleware(async (req, res, next) => {
+  const pullRequests = await GithubService.getLastPullRequests(req.params.id);
+
+  const prs = await models.pullRequest.findAll({ where: {githubId: (pullRequests || []).map(({number}) => number.toString())}});
+  const issues = await models.issue.findAll({where: {issueId: (prs || []).map(({issueId}) => issueId.toString())}})
+
+  const getTitleBody = ({githubId}) => {
+    const {title, body} = pullRequests.find(_ => _.number === +githubId);
+    return {title, body};
+  }
+
+  const getIssue = ({issueId}) => issues.find(_ => +_.issueId === +issueId);
+
+  const response = [];
+  for (const pr of prs)
+    response.push({...getTitleBody(pr), ...getIssue(pr)?.dataValues})
+
+  return res.json(response)
+}));
+
 module.exports = router;

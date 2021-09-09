@@ -2,13 +2,15 @@ const Octokit = require('octokit').Octokit;
 const githubConfig = require('../config/github.config');
 const octokit = new Octokit({ auth: githubConfig.githubToken });
 
+const ownerRepo = {owner: githubConfig.githubOwner, repo: githubConfig.githubRepo,}
+const mapData = ({data}) => data;
+
 module.exports = class GithubService {
 
   static async createIssue(title, description) {
     // Create issue
     const data = await octokit.rest.issues.create({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
       title,
       body: description,
       labels: ['draft']
@@ -20,8 +22,7 @@ module.exports = class GithubService {
   static async closeIssue(issueId) {
     // Close issue
     const data = await octokit.rest.issues.update({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
       issue_number: issueId,
       state: 'closed',
     });
@@ -32,8 +33,7 @@ module.exports = class GithubService {
   static async removeDraftLabelFromIssue(issueId) {
     // Remove Draft label from issue
     const data = await octokit.rest.issues.removeLabel({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
       issue_number: issueId,
       name: 'draft'
     });
@@ -44,8 +44,7 @@ module.exports = class GithubService {
   static async getIssueById(issueId) {
     // Get issue by id
     const data = await octokit.rest.issues.get({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
       issue_number: issueId,
     });
 
@@ -55,8 +54,7 @@ module.exports = class GithubService {
   static async getIssueComments(issueId) {
     // Get Issue comments
     const data = await octokit.rest.issues.listComments({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
       issue_number: issueId,
     });
 
@@ -66,8 +64,7 @@ module.exports = class GithubService {
   static async getIssueForks() {
     // Get Issue comments
     const data = await octokit.rest.repos.listForks({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
     });
 
     return data.data
@@ -76,8 +73,7 @@ module.exports = class GithubService {
   static async createComment(issueId, comment) {
     // Create comment
     const data = await octokit.rest.issues.createComment({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
       issue_number: issueId,
       body: comment,
     });
@@ -89,8 +85,7 @@ module.exports = class GithubService {
     // Create pull request
     const data = await octokit.rest.pulls.create({
       accept: 'application/vnd.github.v3+json',
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
       title,
       body: description,
       head: `${username}:${githubConfig.githubMainBranch}`,
@@ -105,8 +100,7 @@ module.exports = class GithubService {
   static async mergePullRequest(pullRequestNumber) {
     // Merge pull request
     const data = await octokit.rest.pulls.merge({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
       pull_number: pullRequestNumber
     });
 
@@ -116,11 +110,42 @@ module.exports = class GithubService {
   static async getPullRequestCommits(pullRequestNumber) {
     // Merge pull request
     const data = await octokit.rest.pulls.listCommits({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
+      ...ownerRepo,
       pull_number: pullRequestNumber
     });
 
     return data.data;
+  }
+
+  static async getLastPullRequests(amount = 3) {
+    // Get last N pull requests
+    const filterMerged = ({merged_at}) => !!merged_at;
+    const sortMerged = ({merged_at: a}, {merged_at: b}) =>
+      ((a = new Date(a), b = new Date(b)), a > b ? -1 : a < b ? 1 : 0);
+
+    return octokit.rest.pulls.list({
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
+      state: `closed`
+    }).then((response) => response?.data?.filter(filterMerged).sort(sortMerged).slice(0, amount))
+  }
+
+  /**
+   * Get last N months total commits, returns an object with JS timestamp and total of commits for that month
+   * @example {Promise<{1627776000000: 1}>}
+   */
+  static async getLastCommits(months = 6) {
+    const toDate = (timestamp) => new Date(timestamp * 1000).setDate(1);
+
+    const toDateObject = (p, {total = 0, week = 0}) =>
+      ({...p, [toDate(week)]: (p[toDate(week)] || 0) + total});
+
+    const backToObject = (p, [k, v]) => ({...p, [k]: v});
+
+    return octokit.rest.repos.getCommitActivityStats({...ownerRepo,})
+      .then(mapData)
+      .then(weeks => weeks.reduce(toDateObject, {}))
+      .then(reduced =>
+        Object.entries(reduced).slice(-months).reduce(backToObject, {}))
   }
 };
