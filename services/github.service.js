@@ -161,4 +161,13 @@ module.exports = class GithubService {
         return []
       })
   }
+
+  static async getForkedRepo(ghhandler){
+    const data = await octokit.rest.repos.get({
+      ...ownerRepo,
+      owner: ghhandler,
+    })
+
+    return data.data
+  }
 };

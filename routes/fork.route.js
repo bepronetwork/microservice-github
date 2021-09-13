@@ -10,4 +10,11 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
   return res.json(forks);
 }));
 
+/* GET Forked Repo by Github login*/
+router.get('/repo/:ghhandler', asyncMiddleware(async (req, res, next) => {
+  const forks = await GithubService.getForkedRepo(req.params.ghhandler);
+
+  return res.json(forks);
+}));
+
 module.exports = router;
