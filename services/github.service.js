@@ -144,6 +144,7 @@ module.exports = class GithubService {
       `bepro-js`,
       `web-network`,
       `microservice-github`,
+      `landing-page`
     ];
 
     const toDate = (timestamp) => new Date(timestamp * 1000).setDate(1);
