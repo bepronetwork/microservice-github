@@ -4,6 +4,8 @@ const octokit = new Octokit({ auth: githubConfig.githubToken });
 
 const ownerRepo = {owner: githubConfig.githubOwner, repo: githubConfig.githubRepo,}
 const mapData = ({data}) => data;
+//                       min * sec * ms
+const GITHUB_STATS_TTL = 60 * 60 * 1000
 
 const githubRepoStats = {
   lastUpdated: 0,
@@ -140,6 +142,9 @@ module.exports = class GithubService {
    * @example {Promise<{1627776000000: 1}>}
    */
   static async getLastCommits(months = 6) {
+    if (githubRepoStats.lastUpdated && +new Date() - githubRepoStats.lastUpdated <= GITHUB_STATS_TTL)
+      return githubRepoStats.data;
+
     const repos = [
       `bepro-js`,
       `web-network`,
@@ -166,6 +171,11 @@ module.exports = class GithubService {
             reduced[k] = (reduced[k] || 0) + v;
 
         return Object.entries(reduced).slice(-months).reduce(backToObject, {});
+      }).then(reduced => {
+        githubRepoStats.data = reduced;
+        githubRepoStats.lastUpdated = +new Date();
+
+        return reduced;
       })
   }
 
