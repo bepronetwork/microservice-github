@@ -5,6 +5,11 @@ const octokit = new Octokit({ auth: githubConfig.githubToken });
 const ownerRepo = {owner: githubConfig.githubOwner, repo: githubConfig.githubRepo,}
 const mapData = ({data}) => data;
 
+const githubRepoStats = {
+  lastUpdated: 0,
+  data: {},
+}
+
 module.exports = class GithubService {
 
   static async createIssue(title, description) {
@@ -135,6 +140,12 @@ module.exports = class GithubService {
    * @example {Promise<{1627776000000: 1}>}
    */
   static async getLastCommits(months = 6) {
+    const repos = [
+      `bepro-js`,
+      `web-network`,
+      `microservice-github`,
+    ];
+
     const toDate = (timestamp) => new Date(timestamp * 1000).setDate(1);
 
     const toDateObject = (p, {total = 0, week = 0}) =>
@@ -142,11 +153,19 @@ module.exports = class GithubService {
 
     const backToObject = (p, [k, v]) => ({...p, [k]: v});
 
-    return octokit.rest.repos.getCommitActivityStats({...ownerRepo,})
-      .then(mapData)
-      .then(weeks => weeks.reduce(toDateObject, {}))
-      .then(reduced =>
-        Object.entries(reduced).slice(-months).reduce(backToObject, {}))
+    const getCommitActivity = (repo) =>
+      octokit.rest.repos.getCommitActivityStats({...ownerRepo, repo,}).then(mapData)
+
+    return Promise.all(repos.map(getCommitActivity))
+      .then(reposWeekly => reposWeekly.map(week => week.reduce(toDateObject, {})))
+      .then(reposMonthly => {
+        const reduced = {};
+        for (const repo of reposMonthly)
+          for (const [k, v] of Object.entries(repo))
+            reduced[k] = (reduced[k] || 0) + v;
+
+        return Object.entries(reduced).slice(-months).reduce(backToObject, {});
+      })
   }
 
   static async getAllIssues() {
