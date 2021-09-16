@@ -163,7 +163,7 @@ module.exports = class GithubService {
       octokit.rest.repos.getCommitActivityStats({...ownerRepo, repo,}).then(mapData)
 
     return Promise.all(repos.map(getCommitActivity))
-      .then(reposWeekly => reposWeekly.map(week => week.reduce(toDateObject, {})))
+      .then(reposWeekly => reposWeekly.map(week => (week || []).reduce(toDateObject, {})))
       .then(reposMonthly => {
         const reduced = {};
         for (const repo of reposMonthly)
