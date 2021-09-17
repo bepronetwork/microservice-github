@@ -4,10 +4,15 @@ const octokit = new Octokit({ auth: githubConfig.githubToken });
 
 const ownerRepo = {owner: githubConfig.githubOwner, repo: githubConfig.githubRepo,}
 const mapData = ({data}) => data;
-//                       min * sec * ms
-const GITHUB_STATS_TTL = 60 * 60 * 1000
+//                      hrs * min * sec * ms
+const GITHUB_STATS_TTL = 24 * 60 * 60 * 1000
 
 const githubRepoStats = {
+  lastUpdated: 0,
+  data: {},
+}
+
+const githubForkStats = {
   lastUpdated: 0,
   data: {},
 }
@@ -190,5 +195,21 @@ module.exports = class GithubService {
         console.error(e);
         return []
       })
+  }
+
+  static async getForksAmountFor(repo = ``) {
+    if (githubForkStats.lastUpdated && +new Date() - githubForkStats.lastUpdated <= GITHUB_STATS_TTL)
+      return githubForkStats.data;
+
+    const {data: forks} = await octokit.rest.repos.listForks({...ownerRepo, repo, per_page: 100,});
+    const {data: stars} = await octokit.rest.activity.listStargazersForRepo({...ownerRepo, repo, per_page: 100,})
+    const toLen = (array) =>  array.length > 99 ? `+99` : array.length.toString();
+
+    const data = { repo, forks: toLen(forks), stars: toLen(stars), };
+
+    githubForkStats.lastUpdated = +new Date();
+    githubForkStats.data = data;
+
+    return data;
   }
 };
