@@ -3,6 +3,7 @@ const router = express.Router();
 const asyncMiddleware = require('../middlewares/async.middleware');
 const BeproService = require('../services/bepro.service');
 const GithubService = require('../services/github.service');
+const axios = require(`axios`);
 
 /* GET home page. */
 router.get('/', asyncMiddleware((req, res, next) => {
@@ -30,6 +31,11 @@ router.get(`/forkstats`, async (req, res) => {
   // const data = await Promise.all(repos.map(GithubService.getForksAmountFor));
 
   res.json(await Promise.all(repos.map(GithubService.getForksAmountFor)));
+})
+
+router.get(`/ip/`, async (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  res.json(await axios.get(`https://pro.ip-api.com/json/${ip}?key=${process.env.IP_API_KEY}&fields=status,message,countryCode`).then(({data}) => data))
 })
 
 module.exports = router;
