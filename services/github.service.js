@@ -4,6 +4,18 @@ const octokit = new Octokit({ auth: githubConfig.githubToken });
 
 const ownerRepo = {owner: githubConfig.githubOwner, repo: githubConfig.githubRepo,}
 const mapData = ({data}) => data;
+//                      hrs * min * sec * ms
+const GITHUB_STATS_TTL = 24 * 60 * 60 * 1000
+
+const githubRepoStats = {
+  lastUpdated: 0,
+  data: {},
+}
+
+const githubForkStats = {
+  lastUpdated: 0,
+  data: {},
+}
 
 module.exports = class GithubService {
 
@@ -135,6 +147,16 @@ module.exports = class GithubService {
    * @example {Promise<{1627776000000: 1}>}
    */
   static async getLastCommits(months = 6) {
+    if (githubRepoStats.lastUpdated && +new Date() - githubRepoStats.lastUpdated <= GITHUB_STATS_TTL)
+      return githubRepoStats.data;
+
+    const repos = [
+      `bepro-js`,
+      `web-network`,
+      `microservice-github`,
+      `landing-page`
+    ];
+
     const toDate = (timestamp) => new Date(timestamp * 1000).setDate(1);
 
     const toDateObject = (p, {total = 0, week = 0}) =>
@@ -142,11 +164,24 @@ module.exports = class GithubService {
 
     const backToObject = (p, [k, v]) => ({...p, [k]: v});
 
-    return octokit.rest.repos.getCommitActivityStats({...ownerRepo,})
-      .then(mapData)
-      .then(weeks => weeks.reduce(toDateObject, {}))
-      .then(reduced =>
-        Object.entries(reduced).slice(-months).reduce(backToObject, {}))
+    const getCommitActivity = (repo) =>
+      octokit.rest.repos.getCommitActivityStats({...ownerRepo, repo,}).then(mapData)
+
+    return Promise.all(repos.map(getCommitActivity))
+      .then(reposWeekly => reposWeekly.map(week => (week || []).reduce(toDateObject, {})))
+      .then(reposMonthly => {
+        const reduced = {};
+        for (const repo of reposMonthly)
+          for (const [k, v] of Object.entries(repo))
+            reduced[k] = (reduced[k] || 0) + v;
+
+        return Object.entries(reduced).slice(-months).reduce(backToObject, {});
+      }).then(reduced => {
+        githubRepoStats.data = reduced;
+        githubRepoStats.lastUpdated = +new Date();
+
+        return reduced;
+      })
   }
 
   static async getAllIssues() {
@@ -169,5 +204,21 @@ module.exports = class GithubService {
     })
 
     return data.data
+  }
+
+  static async getForksAmountFor(repo = ``) {
+    if (githubForkStats.lastUpdated && +new Date() - githubForkStats.lastUpdated <= GITHUB_STATS_TTL)
+      return githubForkStats.data;
+
+    const {data: forks} = await octokit.rest.repos.listForks({...ownerRepo, repo, per_page: 100,});
+    const {data: stars} = await octokit.rest.activity.listStargazersForRepo({...ownerRepo, repo, per_page: 100,})
+    const toLen = (array) =>  array.length > 99 ? `+99` : array.length.toString();
+
+    const data = { repo, forks: toLen(forks), stars: toLen(stars), };
+
+    githubForkStats.lastUpdated = +new Date();
+    githubForkStats.data = data;
+
+    return data;
   }
 };

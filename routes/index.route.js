@@ -25,4 +25,11 @@ router.get(`/repostats`, async (req, res) => {
   res.json(await GithubService.getLastCommits())
 })
 
+router.get(`/forkstats`, async (req, res) => {
+  const repos = [`bepro-js`, `web-network`, `landing-page`];
+  // const data = await Promise.all(repos.map(GithubService.getForksAmountFor));
+
+  res.json(await Promise.all(repos.map(GithubService.getForksAmountFor)));
+})
+
 module.exports = router;
