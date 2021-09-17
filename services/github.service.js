@@ -12,10 +12,6 @@ const githubRepoStats = {
   data: {},
 }
 
-const githubForkStats = {
-  lastUpdated: 0,
-  data: {},
-}
 
 module.exports = class GithubService {
 
@@ -207,18 +203,10 @@ module.exports = class GithubService {
   }
 
   static async getForksAmountFor(repo = ``) {
-    if (githubForkStats.lastUpdated && +new Date() - githubForkStats.lastUpdated <= GITHUB_STATS_TTL)
-      return githubForkStats.data;
-
     const {data: forks} = await octokit.rest.repos.listForks({...ownerRepo, repo, per_page: 100,});
     const {data: stars} = await octokit.rest.activity.listStargazersForRepo({...ownerRepo, repo, per_page: 100,})
     const toLen = (array) =>  array.length > 99 ? `+99` : array.length.toString();
 
-    const data = { repo, forks: toLen(forks), stars: toLen(stars), };
-
-    githubForkStats.lastUpdated = +new Date();
-    githubForkStats.data = data;
-
-    return data;
+    return { repo, forks: toLen(forks), stars: toLen(stars), };
   }
 };
