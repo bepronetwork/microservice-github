@@ -197,6 +197,15 @@ module.exports = class GithubService {
       })
   }
 
+  static async getForkedRepo(ghhandler){
+    const data = await octokit.rest.repos.get({
+      ...ownerRepo,
+      owner: ghhandler,
+    })
+
+    return data.data
+  }
+
   static async getForksAmountFor(repo = ``) {
     if (githubForkStats.lastUpdated && +new Date() - githubForkStats.lastUpdated <= GITHUB_STATS_TTL)
       return githubForkStats.data;
