@@ -21,7 +21,10 @@ router.patch('/connect/:githubHandle', asyncMiddleware(async (req, res, next) =>
         githubHandle: req.params.githubHandle
       },
     });
-  
+
+  if (user === null)
+    return res.status(400).json(`user not found`);
+
    await user.update({
       githubHandle: user.githubHandle,
       githubLogin: user.githubLogin,
