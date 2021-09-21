@@ -12,6 +12,7 @@ module.exports = {
     queryInterface.addColumn('users', 'githubLogin', {
       type: Sequelize.STRING,
       allowNull: true,
+      unique: true,
     });
   },
 
