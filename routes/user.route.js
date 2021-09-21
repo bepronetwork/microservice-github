@@ -5,12 +5,13 @@ const models = require('../models');
 
 /* POST connect github handle and githubLogin */
 router.post('/connect', asyncMiddleware(async (req, res, next) => {
+  
   const find = await models.user.findOne({
     where: {
       githubLogin: req.body.githubLogin
     }
   })
-  console.log(find)
+
   if(find){
     return res.status(404).json('already exist user');  
   }
