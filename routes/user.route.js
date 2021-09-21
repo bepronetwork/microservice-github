@@ -12,14 +12,12 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
     }
   })
 
-  if(find){
-    return res.status(404).json('already exist user');  
+  if(!find){
+    await models.user.create({
+      githubHandle: req.body.githubHandle,
+      githubLogin: req.body.githubLogin,
+    });
   }
-
-  await models.user.create({
-    githubHandle: req.body.githubHandle,
-    githubLogin: req.body.githubLogin,
-  });
 
   return res.status(204).json('ok');
 }));
