@@ -154,7 +154,20 @@ module.exports = class GithubService {
       `bepro-js`,
       `web-network`,
       `microservice-github`,
-      `landing-page`
+      `landing-page`,
+      `webapp-community`,
+      `grants-program`,
+      `bepro-telegram-bot`,
+      `B.E.P.R.O`,
+      `b2c-layout`,
+      `ms-withdraw`,
+      `backoffice`,
+      `ms-master`,
+      `scheduler-light`,
+      `ms-rabbit-jackpot`,
+      `listener-esports-data`,
+      `ms-esports`,
+      `esports-middleware`,
     ];
 
     const toDate = (timestamp) => +new Date(timestamp * 1000);
