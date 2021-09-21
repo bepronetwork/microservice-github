@@ -5,10 +5,19 @@ const models = require('../models');
 
 /* POST connect github handle and githubLogin */
 router.post('/connect', asyncMiddleware(async (req, res, next) => {
-  await models.user.create({
-    githubHandle: req.body.githubHandle,
-    githubLogin: req.body.githubLogin,
-  });
+  
+  const find = await models.user.findOne({
+    where: {
+      githubLogin: req.body.githubLogin
+    }
+  })
+
+  if(!find){
+    await models.user.create({
+      githubHandle: req.body.githubHandle,
+      githubLogin: req.body.githubLogin,
+    });
+  }
 
   return res.status(204).json('ok');
 }));
