@@ -5,13 +5,6 @@ const BeproService = require('../services/bepro.service');
 const GithubService = require('../services/github.service');
 const axios = require(`axios`);
 
-
-const githubForkStats = {
-  ttl: 24 * 60 * 60 * 1000,
-  lastUpdated: 0,
-  data: {},
-}
-
 /* GET home page. */
 router.get('/', asyncMiddleware((req, res, next) => {
   res.json('Github microservice!');
@@ -34,17 +27,7 @@ router.get(`/repostats`, async (req, res) => {
 })
 
 router.get(`/forkstats`, async (req, res) => {
-  const repos = [`bepro-js`, `web-network`, `landing-page`];
-
-  if (githubForkStats.lastUpdated && +new Date() - githubForkStats.lastUpdated <= githubForkStats.ttl)
-    return res.json(githubForkStats.data);
-
-  const data = await Promise.all(repos.map(GithubService.getForksAmountFor))
-
-  githubForkStats.lastUpdated = +new Date();
-  githubForkStats.data = data;
-
-  res.json(data);
+  res.json(await GithubService.getForksOf([`bepro-js`, `web-network`, `landing-page`]));
 })
 
 router.get(`/ip/`, async (req, res) => {

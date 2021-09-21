@@ -12,6 +12,10 @@ const githubRepoStats = {
   data: {},
 }
 
+const githubForkStats = {
+  lastUpdated: 0,
+  data: {},
+}
 
 module.exports = class GithubService {
 
@@ -153,7 +157,7 @@ module.exports = class GithubService {
       `landing-page`
     ];
 
-    const toDate = (timestamp) => new Date(timestamp * 1000).setDate(1);
+    const toDate = (timestamp) => +new Date(timestamp * 1000);
 
     const toDateObject = (p, {total = 0, week = 0}) =>
       ({...p, [toDate(week)]: (p[toDate(week)] || 0) + total});
@@ -166,12 +170,13 @@ module.exports = class GithubService {
     return Promise.all(repos.map(getCommitActivity))
       .then(reposWeekly => reposWeekly.map(week => (week || []).reduce(toDateObject, {})))
       .then(reposMonthly => {
+
         const reduced = {};
         for (const repo of reposMonthly)
           for (const [k, v] of Object.entries(repo))
             reduced[k] = (reduced[k] || 0) + v;
 
-        return Object.entries(reduced).slice(-months).reduce(backToObject, {});
+        return reduced;
       }).then(reduced => {
         githubRepoStats.data = reduced;
         githubRepoStats.lastUpdated = +new Date();
@@ -208,5 +213,17 @@ module.exports = class GithubService {
     const toLen = (array) =>  array.length > 99 ? `+99` : array.length.toString();
 
     return { repo, forks: toLen(forks), stars: toLen(stars), };
+  }
+
+  static async getForksOf(repos = []) {
+    if (githubForkStats.lastUpdated && +new Date() - githubForkStats.lastUpdated <= GITHUB_STATS_TTL)
+      return githubForkStats.data;
+
+    const data = await Promise.all(repos.map(GithubService.getForksAmountFor))
+
+    githubForkStats.lastUpdated = +new Date();
+    githubForkStats.data = data;
+
+    return data;
   }
 };
