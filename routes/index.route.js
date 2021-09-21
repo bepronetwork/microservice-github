@@ -30,9 +30,9 @@ router.get(`/forkstats`, async (req, res) => {
   res.json(await GithubService.getForksOf([`bepro-js`, `web-network`, `landing-page`]));
 })
 
-router.get(`/ip/`, async (req, res) => {
+router.get(`/ip`, async (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  res.json(await axios.get(`https://pro.ip-api.com/json/${ip}?key=${process.env.IP_API_KEY}&fields=status,message,countryCode`).then(({data}) => data))
+  res.json(await axios.get(`https://pro.ip-api.com/json/${ip}?key=${process.env.IP_API_KEY}&fields=status,message,countryCode,country`).then(({data}) => data))
 })
 
 module.exports = router;
