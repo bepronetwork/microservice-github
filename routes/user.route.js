@@ -14,14 +14,15 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
     }
   })
 
-  if(!find){
+  if (!find) {
     await models.user.create({
       githubHandle: req.body.githubHandle,
       githubLogin: req.body.githubLogin,
     });
 
     timers[req.body.githubHandle] = setTimeout(async () => await models.user.destroy({where: {githubLogin: req.body.githubLogin}}), 60*1000)
-  }
+  } else
+    return res.status(409).json(`already exists`);
 
   return res.status(204).json('ok');
 }));
