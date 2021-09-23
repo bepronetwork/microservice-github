@@ -239,4 +239,8 @@ module.exports = class GithubService {
 
     return data;
   }
+
+  static rateLimit() {
+    return octokit.request('GET /rate_limit')
+  }
 };
