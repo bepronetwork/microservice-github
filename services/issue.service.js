@@ -6,13 +6,13 @@ const TTL = 60 * 1000;
 module.exports = class IssueService {
 
   static async getIssueData(issue) {
-    if (dCache[issue.githubId]?.ttl && +new Date() - dCache[issue.githubId]?.ttl <= TTL)
+    if (dCache[issue.githubId]?.lastUpdated && +new Date() - dCache[issue.githubId]?.lastUpdated <= TTL)
       return dCache[issue.githubId];
 
     const githubIssue = await GithubService.getIssueById(issue.githubId);
 
     const issueData = {
-      ttl: +new Date() + TTL,
+      lastUpdated: +new Date(),
       issueId: issue.issueId,
       githubId: issue.githubId,
       createdAt: issue.createdAt,
