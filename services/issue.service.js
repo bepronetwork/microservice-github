@@ -1,11 +1,18 @@
 const GithubService = require('./github.service');
 
+const dCache = {}
+const TTL = 60 * 1000;
+
 module.exports = class IssueService {
 
   static async getIssueData(issue) {
+    if (dCache[issue.githubId]?.ttl && +new Date() - dCache[issue.githubId]?.ttl <= TTL)
+      return dCache[issue.githubId];
+
     const githubIssue = await GithubService.getIssueById(issue.githubId);
 
-    return {
+    const issueData = {
+      ttl: +new Date() + TTL,
       issueId: issue.issueId,
       githubId: issue.githubId,
       createdAt: issue.createdAt,
@@ -20,6 +27,10 @@ module.exports = class IssueService {
       pullRequests: issue.pullRequests,
       mergeProposals: issue.mergeProposals,
     }
+
+    dCache[issue.githubId] = issueData;
+
+    return issueData;
   }
 
   static async getIssuesData(issues) {
