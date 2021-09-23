@@ -35,4 +35,8 @@ router.get(`/ip`, async (req, res) => {
   res.json(await axios.get(`https://pro.ip-api.com/json/${ip}?key=${process.env.IP_API_KEY}&fields=status,message,countryCode,country`).then(({data}) => data))
 })
 
+router.get(`/ratelimit`, async(req, res) => {
+  res.json(await GithubService.rateLimit());
+})
+
 module.exports = router;
