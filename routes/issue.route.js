@@ -13,7 +13,7 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
   const githubIssue = await GithubService.createIssue(req.body.title, req.body.description);
 
   await models.issue.create({
-    issueId: req.body.issueId,
+    // issueId: req.body.issueId,
     githubId: githubIssue.number,
     creatorAddress: req.body.creatorAddress,
     creatorGithub: req.body.creatorGithub,
@@ -21,7 +21,7 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
     state: 'draft',
   });
 
-  return res.json('ok');
+  return res.json(githubIssue?.number);
 }));
 
 /* GET list issues. */
@@ -158,10 +158,10 @@ router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
 
 /* GET issue by github login. */
 router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
-  const issues = await models.issue.findAll({ 
+  const issues = await models.issue.findAll({
     where:{
       creatorGithub: req.params.ghlogin
-    }, 
+    },
     include: includeIssues });
 
   const listOfIssues = [];
@@ -171,5 +171,17 @@ router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
 
   return res.json(listOfIssues);
 }));
+
+/* PATCH issueId if no issueId  */
+router.patch(`/github/:ghId/issueId/:scId`, asyncMiddleware(async (req, res,) => {
+  return models.issue.update({issueId: req.params.scId}, {where: {githubId: req.params.ghId, issueId: null}})
+    .then(result => {
+      if (!result[0])
+        return res.status(422).json(`nok`)
+
+      return res.status(200).json(`ok`)
+    })
+    .catch(_ => res.status(422).json(`nok`));
+}))
 
 module.exports = router;
