@@ -21,7 +21,7 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
     state: 'draft',
   });
 
-  return res.json(githubIssue);
+  return res.json(githubId);
 }));
 
 /* GET list issues. */
