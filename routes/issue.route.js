@@ -10,18 +10,18 @@ const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
 
 /* POST create issue. */
 router.post('/', asyncMiddleware(async (req, res, next) => {
-  const githubIssue = req.body.githubIssueId || await GithubService.createIssue(req.body.title, req.body.description);
+  const githubId = req.body.githubIssueId || (await GithubService.createIssue(req.body.title, req.body.description))?.number;
 
   await models.issue.create({
     // issueId: req.body.issueId,
-    githubId: githubIssue.number,
+    githubId,
     creatorAddress: req.body.creatorAddress,
     creatorGithub: req.body.creatorGithub,
     amount: req.body.amount,
     state: 'draft',
   });
 
-  return res.json(githubIssue?.number);
+  return res.json(githubIssue);
 }));
 
 /* GET list issues. */
