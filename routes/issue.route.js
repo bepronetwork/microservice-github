@@ -10,7 +10,7 @@ const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
 
 /* POST create issue. */
 router.post('/', asyncMiddleware(async (req, res, next) => {
-  const githubIssue = await GithubService.createIssue(req.body.title, req.body.description);
+  const githubIssue = req.body.githubIssueId || await GithubService.createIssue(req.body.title, req.body.description);
 
   await models.issue.create({
     // issueId: req.body.issueId,
