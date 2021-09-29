@@ -4,29 +4,33 @@ const asyncMiddleware = require('../middlewares/async.middleware');
 const IssueService = require('../services/issue.service');
 const GithubService = require('../services/github.service');
 const models = require('../models');
+const {Op} = require("sequelize");
 
 
 const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
 
 /* POST create issue. */
 router.post('/', asyncMiddleware(async (req, res, next) => {
-  const githubIssue = await GithubService.createIssue(req.body.title, req.body.description);
+  const githubId = req.body.githubIssueId || (await GithubService.createIssue(req.body.title, req.body.description))?.number;
+
+  if (await models.issue.findOne({where: {githubId}}))
+    return res.status(409).json(`issueId already exists on database`);
 
   await models.issue.create({
-    issueId: req.body.issueId,
-    githubId: githubIssue.number,
+    // issueId: req.body.issueId,
+    githubId,
     creatorAddress: req.body.creatorAddress,
     creatorGithub: req.body.creatorGithub,
     amount: req.body.amount,
-    state: 'draft',
+    state: 'pending',
   });
 
-  return res.json('ok');
+  return res.json(githubId);
 }));
 
 /* GET list issues. */
 router.get('/', asyncMiddleware(async (req, res, next) => {
-  const whereCondition = {};
+  const whereCondition = {state: {[Op.not]: 'pending'}, issueId: {[Op.not]: null}};
 
   if (req.query.filterState) {
     whereCondition.state = req.query.filterState;
@@ -158,10 +162,10 @@ router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
 
 /* GET issue by github login. */
 router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
-  const issues = await models.issue.findAll({ 
+  const issues = await models.issue.findAll({
     where:{
       creatorGithub: req.params.ghlogin
-    }, 
+    },
     include: includeIssues });
 
   const listOfIssues = [];
@@ -171,5 +175,17 @@ router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
 
   return res.json(listOfIssues);
 }));
+
+/* PATCH issueId if no issueId  */
+router.patch(`/github/:ghId/issueId/:scId`, asyncMiddleware(async (req, res,) => {
+  return models.issue.update({issueId: req.params.scId, state: `draft`}, {where: {githubId: req.params.ghId, issueId: null}})
+    .then(result => {
+      if (!result[0])
+        return res.status(422).json(`nok`)
+
+      return res.status(200).json(`ok`)
+    })
+    .catch(_ => res.status(422).json(`nok`));
+}))
 
 module.exports = router;
