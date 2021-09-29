@@ -16,7 +16,7 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
   const githubUser = await GithubService.getUser(req.body.githubLogin);
 
   if (!githubUser)
-    return res.status(404).json(`User not found on octokit`);
+    return res.status(404).json(`Spam Error: User not found on Github`);
 
   const {created_at, public_repos} = githubUser;
   const moreThanADay = (+new Date() - +new Date(created_at)) / (24 * 60 * 60 * 1000) >= 7;
@@ -24,10 +24,10 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
   console.log(created_at, (+new Date() - +new Date(created_at)) / (24 * 60 * 60 * 1000))
 
   if (!moreThanADay)
-    return res.status(422).json(`User isn't old enough`);
+    return res.status(422).json(`Spam Error: Github account has to be older than 7 days`);
 
   if (!public_repos)
-    return res.status(422).json(`User has no repos`);
+    return res.status(422).json(`Spam Error: Github Account has to have at least 1 public repository`);
 
   const find = await models.user.findOne({
     where: {
@@ -58,13 +58,13 @@ router.patch('/connect/:githubHandle', asyncMiddleware(async (req, res, next) =>
     });
 
   if (user === null)
-    return res.status(400).json(`user not found`);
+    return res.status(400).json(`Spam Error: user not found`);
 
   if (user.address)
-    return res.status(409).json(`user already joined`);
+    return res.status(409).json(`Spam Error: user already joined`);
 
   if (!+(await BeproService.beproNetwork.web3.eth.getBalance(req.body.address)))
-    return res.status(422).json(`user lacks funds`);
+    return res.status(422).json(`Spam Error: Address has to hold Native Currency`);
 
    await user.update({
       githubHandle: user.githubHandle,
@@ -100,5 +100,7 @@ router.get('/total', asyncMiddleware(async (req, res, next) => {
 router.get(`/all`, asyncMiddleware(async (req, res, next) => {
   res.status(200).json(await models.user.findAll())
 }))
+
+router.delete(`/github/login`, asyncMiddleware( async (req, res, next) => {}))
 
 module.exports = router;
