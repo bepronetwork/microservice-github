@@ -112,4 +112,9 @@ module.exports = class BeproService {
         return 0;
       });
   }
+
+  static async getEthAmountOf(address = ``) {
+
+  }
+
 };
