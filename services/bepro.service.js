@@ -87,6 +87,8 @@ module.exports = class BeproService {
 
     console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
     BeproService.starting = 0;
+
+    return true;
   }
 
   static async getOpenIssues() {

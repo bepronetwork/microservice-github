@@ -10,13 +10,18 @@ const timers = {};
 
 /* POST connect github handle and githubLogin */
 router.post('/connect', asyncMiddleware(async (req, res, next) => {
+  if (!req.body || !req.body.githubLogin || !req.body.githubHandle)
+    return res.status(422).json(`wrong payload`)
+
   const githubUser = await GithubService.getUser(req.body.githubLogin);
 
   if (!githubUser)
     return res.status(404).json(`User not found on octokit`);
 
   const {created_at, public_repos} = githubUser;
-  const moreThanADay = (+new Date() - +new Date(created_at)) / (24 * 60 * 60 * 1000) > 7;
+  const moreThanADay = (+new Date() - +new Date(created_at)) / (24 * 60 * 60 * 1000) >= 7;
+
+  console.log(created_at, (+new Date() - +new Date(created_at)) / (24 * 60 * 60 * 1000))
 
   if (!moreThanADay)
     return res.status(422).json(`User isn't old enough`);
@@ -40,7 +45,7 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
   } else
     return res.status(409).json(`already exists`);
 
-  return res.status(204).json('ok');
+  return res.status(200).json('ok');
 }));
 
 /* PATCH adding address to user with githubHandle */
@@ -58,7 +63,7 @@ router.patch('/connect/:githubHandle', asyncMiddleware(async (req, res, next) =>
   if (user.address)
     return res.status(409).json(`user already joined`);
 
-  if (!+(await BeproService.beproNetwork.getWeb3().eth.getBalance(req.body.address)))
+  if (!+(await BeproService.beproNetwork.web3.eth.getBalance(req.body.address)))
     return res.status(422).json(`user lacks funds`);
 
    await user.update({

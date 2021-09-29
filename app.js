@@ -34,7 +34,10 @@ const CORS = {
   optionsSuccessStatus: 200
 }
 
-BeproService.listenToEvents().then(() => {
+BeproService.listenToEvents().then((started) => {
+  if (!started)
+    return console.log(`Failed to start BeproService`);
+
   app.use(logger('dev'));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
