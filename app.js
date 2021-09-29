@@ -22,6 +22,11 @@ require('./cron');
 // app.set('views', path.join(__dirname, 'views'));
 // app.set('view engine', 'jade');
 
+function allow(from) {
+  console.log(`Request from`, from);
+  return JSON.parse(process.env.CORS_ORIGIN).includes(from);
+}
+
 const origin = (from, callback) =>
   process.env.CORS_ALLOW_NO_ORIGIN === "true"
     ? callback(null, true)
