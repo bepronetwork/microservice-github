@@ -30,7 +30,7 @@ function allow(from) {
 const origin = (from, callback) =>
   process.env.CORS_ALLOW_NO_ORIGIN === "true"
     ? callback(null, true)
-    : JSON.parse(process.env.CORS_ORIGIN).includes(from)
+    : allow(from)
       ? callback(null, true)
       : callback(new Error(`Blocked by cors`), false)
 
