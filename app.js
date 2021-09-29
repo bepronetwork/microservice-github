@@ -25,7 +25,7 @@ require('./cron');
 const origin = (from, callback) =>
   process.env.CORS_ALLOW_NO_ORIGIN === "true"
     ? callback(null, true)
-    : [process.env.CORS_ORIGIN].includes(from)
+    : JSON.parse(process.env.CORS_ORIGIN).includes(from)
       ? callback(null, true)
       : callback(new Error(`Blocked by cors`), false)
 
