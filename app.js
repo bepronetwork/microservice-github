@@ -22,14 +22,33 @@ require('./cron');
 // app.set('views', path.join(__dirname, 'views'));
 // app.set('view engine', 'jade');
 
+function allow(from) {
+  console.log(`Request from`, from);
+  return JSON.parse(process.env.CORS_ORIGIN).includes(from);
+}
 
-BeproService.listenToEvents().then(() => {
+const origin = (from, callback) =>
+  process.env.CORS_ALLOW_NO_ORIGIN === "true"
+    ? callback(null, true)
+    : allow(from)
+      ? callback(null, true)
+      : callback(new Error(`Blocked by cors`), false)
+
+const CORS = {
+  origin,
+  optionsSuccessStatus: 200
+}
+
+BeproService.listenToEvents().then((started) => {
+  if (!started)
+    return console.log(`Failed to start BeproService`);
+
   app.use(logger('dev'));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(express.static(path.join(__dirname, 'public')));
 
-  app.use(cors());
+  app.use(cors(CORS));
 
   app.use('/', indexRoutes);
   app.use('/issues', issuesRoutes);

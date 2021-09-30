@@ -239,4 +239,14 @@ module.exports = class GithubService {
 
     return data;
   }
+
+  static rateLimit() {
+    return octokit.request('GET /rate_limit')
+  }
+
+  static async getUser(username) {
+    return octokit.rest.users.getByUsername({username})
+      .then(({data}) => data)
+      .catch(() => null);
+  }
 };
