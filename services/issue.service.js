@@ -1,6 +1,5 @@
 const GithubService = require('./github.service');
 const githubConfig = require('../config/github.config');
-const ownerRepo = {owner: githubConfig.githubOwner, repo: githubConfig.githubRepo}
 
 const dCache = {}
 const TTL = 60 * 1000;
@@ -28,7 +27,7 @@ module.exports = class IssueService {
       developers: issue.developers,
       pullRequests: issue.pullRequests,
       mergeProposals: issue.mergeProposals,
-      ...ownerRepo
+      repo: githubConfig.githubRepo
     }
 
     dCache[issue.githubId] = issueData;
@@ -44,7 +43,7 @@ module.exports = class IssueService {
       const githubIssue = getGithubIssue(issue);
       if (!githubIssue)
         return null;
-      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments, ...ownerRepo});
+      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments, repo: githubConfig.githubRepo});
     }
 
     return issues.map(mergeIssueData).filter(issue => !!issue);
