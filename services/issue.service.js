@@ -1,5 +1,6 @@
 const GithubService = require('./github.service');
-
+const githubConfig = require('../config/github.config');
+const ownerRepo = {owner: githubConfig.githubOwner, repo: githubConfig.githubRepo}
 module.exports = class IssueService {
 
   static async getIssueData(issue) {
@@ -30,7 +31,7 @@ module.exports = class IssueService {
       const githubIssue = getGithubIssue(issue);
       if (!githubIssue)
         return null;
-      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments});
+      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments, ...ownerRepo});
     }
 
     return issues.map(mergeIssueData).filter(issue => !!issue);
