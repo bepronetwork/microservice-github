@@ -15,7 +15,7 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
   if(!req.body.creatorGithub)
     return res.status(422).json(`creatorGithub is required`);
   
-  const githubId = req.body.githubIssueId || (await GithubService.createIssue(req.body.title, req.body.description))?.number.toString()
+  const githubId = req.body.githubIssueId || (await GithubService.createIssue(req.body.title, req.body.description))?.number?.toString()
 
   if (await models.issue.findOne({where: {githubId}}))
     return res.status(409).json(`issueId already exists on database`);
