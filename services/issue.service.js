@@ -34,16 +34,18 @@ module.exports = class IssueService {
   }
 
   static async getIssuesData(issues) {
-    const githubIssues = await GithubService.getAllIssues();
-    const getGithubIssue = (issue) => (githubIssues || []).find(i => i.number === +issue.githubId);
 
-    const mergeIssueData = (issue) => {
-      const githubIssue = getGithubIssue(issue);
+    const mergeIssueData = async (issue) => {
+      const githubIssue = await IssueService.getIssueData(issue);
       if (!githubIssue)
         return null;
       return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments});
     }
 
-    return issues.map(mergeIssueData).filter(issue => !!issue);
+    return Promise.all(issues.map(mergeIssueData).filter(issue => !!issue))
+      .catch(e => {
+        console.log(`Error fetching issues data`, e);
+        return [];
+      });
   }
 };
