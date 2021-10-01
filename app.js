@@ -35,7 +35,7 @@ const origin = (from, callback) =>
       : callback(new Error(`Blocked by cors`), false)
 
 const CORS = {
-  origin,
+  // origin,
   optionsSuccessStatus: 200
 }
 
