@@ -34,9 +34,11 @@ module.exports = class IssueService {
   }
 
   static async getIssuesData(issues) {
+    const githubIssues = await GithubService.getAllIssues();
+    const getGithubIssue = (issue) => (githubIssues || []).find(i => i.number === +issue.githubId);
 
-    const mergeIssueData = async (issue) => {
-      const githubIssue = await IssueService.getIssueData(issue);
+    const mergeIssueData = (issue) => {
+      const githubIssue = getGithubIssue(issue);
       if (!githubIssue)
         return null;
       return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments});
