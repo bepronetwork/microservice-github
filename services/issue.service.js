@@ -37,13 +37,17 @@ module.exports = class IssueService {
 
   static async getIssuesData(issues) {
 
-    const mergeIssueData = (issue) => {
-      const githubIssue = IssueService.getIssueData(issue);
-      if (!githubIssue || !issue?.issueId)
+    const mergeIssueData = async (issue) => {
+      const githubIssue = await IssueService.getIssueData(issue);
+      if (!githubIssue)
         return null;
       return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments, repo: githubConfig.githubRepo});
     }
 
-    return issues.map(mergeIssueData).filter(issue => !!issue);
+    return Promise.all(issues.map(mergeIssueData).filter(issue => !!issue))
+      .catch(e => {
+        console.log(`Error fetching issues data`, e);
+        return [];
+      });
   }
 };
