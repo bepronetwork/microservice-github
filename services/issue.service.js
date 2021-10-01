@@ -37,7 +37,7 @@ module.exports = class IssueService {
 
     const mergeIssueData = async (issue) => {
       const githubIssue = await IssueService.getIssueData(issue);
-      if (!githubIssue || !issue?.issueId)
+      if (!githubIssue)
         return null;
       return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments});
     }
