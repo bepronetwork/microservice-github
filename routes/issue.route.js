@@ -30,11 +30,12 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
 
 /* GET list issues. */
 router.get('/', asyncMiddleware(async (req, res, next) => {
-  const whereCondition = {state: {[Op.not]: 'pending'}, issueId: {[Op.not]: null}};
+  const whereCondition = {};
 
   if (req.query.filterState) {
     whereCondition.state = req.query.filterState;
   }
+
   if (req.query.issueIds) {
     whereCondition.issueId = req.query.issueIds;
   }
