@@ -198,7 +198,7 @@ module.exports = class GithubService {
       })
   }
 
-  static async getAllIssuesRecursive(repoInfo, page = 1, pool = []) {
+  static async getAllIssuesRecursive(repoInfo = ownerRepo, page = 1, pool = []) {
     return octokit.rest.issues.listForRepo({...repoInfo, state: `open`, per_page: 100, page})
       .then(({data}) =>
         data.length === 100 ? GithubService.getAllIssuesRecursive(repoInfo, page++, data) : pool.concat(data))
