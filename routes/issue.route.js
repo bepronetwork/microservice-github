@@ -12,7 +12,7 @@ const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
 /* POST create issue. */
 router.post('/', asyncMiddleware(async (req, res, next) => {
 
-  if(req.body.creatorGithub)
+  if(!req.body.creatorGithub)
     return res.status(422).json(`creatorGithub is required`);
   
   const githubId = req.body.githubIssueId || (await GithubService.createIssue(req.body.title, req.body.description))?.number.toString()
