@@ -34,7 +34,7 @@ module.exports = class IssueService {
   }
 
   static async getIssuesData(issues) {
-    const githubIssues = await GithubService.getAllIssues();
+    const githubIssues = await GithubService.getAllIssuesRecursive();
     const getGithubIssue = (issue) => (githubIssues || []).find(i => i.number === +issue.githubId);
 
     const mergeIssueData = (issue) => {
