@@ -11,8 +11,8 @@
     "prestart": "npm run migrate",
     "dev": "nodemon ./bin/www",
     "start": "node ./bin/www",
-    "migrate": "node_modules/.bin/sequelize db:migrate",
-    "migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
+    "migrate": "sequelize db:migrate",
+    "migrate:undo": "sequelize db:migrate:undo",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

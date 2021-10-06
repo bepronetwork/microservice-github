@@ -69,7 +69,8 @@ router.patch('/connect/:githubHandle', asyncMiddleware(async (req, res, next) =>
    await user.update({
       githubHandle: user.githubHandle,
       githubLogin: user.githubLogin,
-      address: req.body.address
+      address: req.body.address,
+      accessToken: req.body.accessToken,
     })
 
   if (timers[user.githubHandle])

@@ -249,4 +249,13 @@ module.exports = class GithubService {
       .then(({data}) => data)
       .catch(() => null);
   }
+
+  static async repoExists(owner, repo) {
+    return octokit.rest.repos.get({owner, repo})
+      .then(({data}) => !!data?.id)
+      .catch(e => {
+        console.error(`Error checking for ${owner}/${repo} `)
+        return false;
+      });
+  }
 };
