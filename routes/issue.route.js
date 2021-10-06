@@ -91,6 +91,24 @@ router.get('/github/:id', asyncMiddleware(async (req, res, next) => {
   return res.json(await IssueService.getIssueData(issue));
 }));
 
+/* PUT update issue by github id */
+router.put('/github/:id', asyncMiddleware(async (req, res, next) => {
+  try {
+    const issue = await models.issue.findOne(
+      {
+        where: {
+          githubId: req.params.id
+        },
+        include: includeIssues,
+      });
+      issue.state = req.body.state;
+      issue.save()
+    return res.json(await IssueService.getIssueData(issue));
+  } catch (error) {
+    return res.status(400).json([`failed to update issue`]);
+  }
+}));
+
 /* GET Comments for issue. */
 router.get('/github/:id/comments', asyncMiddleware(async (req, res, next) => {
   const githubComments = await GithubService.getIssueComments(req.params.id);
