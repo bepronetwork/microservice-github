@@ -50,9 +50,9 @@ module.exports = class BeproService {
   static async readRedemIssue(event) {
     const eventData = event.returnValues;
     // Close issue on github
-    const issue = await models.issue.findOne({where: {issueId: eventData.id,},});
+    const issue = await models.issue.findOne({where: {issueId: eventData.id,}});
     await GithubService.closeIssue(issue.githubId);
-    issue.state = 'redeemed';
+    issue.state = 'canceled';
     await issue.save();
   }
 
