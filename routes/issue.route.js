@@ -4,10 +4,10 @@ const asyncMiddleware = require('../middlewares/async.middleware');
 const IssueService = require('../services/issue.service');
 const GithubService = require('../services/github.service');
 const models = require('../models');
-const {Op} = require("sequelize");
-
+const NodeCache = require('node-cache')
 
 const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
+const cache = new NodeCache({stdTTL: 60})
 
 /* POST create issue. */
 router.post('/', asyncMiddleware(async (req, res, next) => {
@@ -34,19 +34,28 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
 
 /* GET list issues. */
 router.get('/', asyncMiddleware(async (req, res, next) => {
-  const whereCondition = {};
+  const key = 'issues_list'
+  const issuesFromCache = cache.get(key);
 
-  if (req.query.filterState) {
-    whereCondition.state = req.query.filterState;
+  if(!issuesFromCache){
+    const whereCondition = {};
+
+    if (req.query.filterState) {
+      whereCondition.state = req.query.filterState;
+    }
+
+    if (req.query.issueIds) {
+      whereCondition.issueId = req.query.issueIds;
+    }
+
+    const issues = await models.issue.findAll({ where: whereCondition, include: includeIssues, raw: true, nest: true });
+    const data = await IssueService.getIssuesData(issues)
+    cache.set(key, data);
+
+    return res.json(data)
   }
 
-  if (req.query.issueIds) {
-    whereCondition.issueId = req.query.issueIds;
-  }
-
-  const issues = await models.issue.findAll({ where: whereCondition, include: includeIssues, raw: true, nest: true });
-
-  return IssueService.getIssuesData(issues).then(data => res.json(data))
+  return res.json(issuesFromCache)
 }));
 
 /* GET issue by issue id. */
