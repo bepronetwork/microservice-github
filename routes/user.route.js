@@ -10,8 +10,10 @@ const timers = {};
 
 /* POST connect github handle and githubLogin */
 router.post('/connect', asyncMiddleware(async (req, res, next) => {
-  if (!req.body || !req.body.githubLogin || !req.body.githubHandle)
+  if (!req.body || !req.body.githubLogin || !req.body.githubHandle || !req.body.accessToken)
     return res.status(422).json(`wrong payload`)
+
+  console.log(`REQ`, req.body);
 
   const githubUser = await GithubService.getUser(req.body.githubLogin);
 
@@ -39,6 +41,7 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
     await models.user.create({
       githubHandle: req.body.githubHandle,
       githubLogin: req.body.githubLogin,
+      accessToken: req.body.accessToken,
     });
 
     timers[req.body.githubHandle] = setTimeout(async () => await models.user.destroy({where: {githubLogin: req.body.githubLogin}}), 60*1000)

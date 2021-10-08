@@ -23,7 +23,7 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
   await models.issue.create({
     // issueId: req.body.issueId,
     githubId,
-    repository_id: req.body.repoId,
+    repository_id: req.body.repository_id,
     creatorAddress: req.body.creatorAddress,
     creatorGithub: req.body.creatorGithub,
     amount: req.body.amount,
