@@ -13,8 +13,6 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
   if (!req.body || !req.body.githubLogin || !req.body.githubHandle || !req.body.accessToken)
     return res.status(422).json(`wrong payload`)
 
-  console.log(`REQ`, req.body);
-
   const githubUser = await GithubService.getUser(req.body.githubLogin);
 
   if (!githubUser)
@@ -22,8 +20,6 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
 
   const {created_at, public_repos} = githubUser;
   const moreThanADay = (+new Date() - +new Date(created_at)) / (24 * 60 * 60 * 1000) >= 7;
-
-  console.log(created_at, (+new Date() - +new Date(created_at)) / (24 * 60 * 60 * 1000))
 
   if (!moreThanADay)
     return res.status(422).json(`Spam Error: Github account has to be older than 7 days`);
