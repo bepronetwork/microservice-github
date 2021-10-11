@@ -9,6 +9,7 @@ const issuesRoutes = require('./routes/issue.route');
 const developersRoutes = require('./routes/developer.route');
 const usersRoutes = require('./routes/user.route');
 const forksRoutes = require('./routes/fork.route');
+const reposRoute = require('./routes/repos.route');
 const pullRequestsRoutes = require('./routes/pullRequest.route');
 const BeproService = require('./services/bepro.service');
 
@@ -23,7 +24,6 @@ require('./cron');
 // app.set('view engine', 'jade');
 
 function allow(from) {
-  console.log(`Request from`, from);
   return JSON.parse(process.env.CORS_ORIGIN).includes(from);
 }
 
@@ -56,6 +56,7 @@ BeproService.listenToEvents().then((started) => {
   app.use('/users', usersRoutes);
   app.use('/forks', forksRoutes);
   app.use('/pullrequests', pullRequestsRoutes);
+  app.use('/repos', reposRoute);
 
 // catch 404 and forward to error handler
   app.use((req, res, next) => {
@@ -64,10 +65,8 @@ BeproService.listenToEvents().then((started) => {
 
 // error handler
   app.use((err, req, res, next) => {
-    const message = req.app.get('env') === 'development' ? err.message : 'Unknown Error';
-
-    console.log(err);
-    return res.status(err.status || 500).json({ error: message });
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err?.message || `Error had no message` });
   });
 });
 

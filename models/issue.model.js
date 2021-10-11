@@ -32,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
     creatorAddress: DataTypes.STRING,
     creatorGithub: DataTypes.STRING,
     amount: DataTypes.INTEGER,
+    repository_id: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'issue',

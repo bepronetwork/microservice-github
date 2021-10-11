@@ -12,11 +12,13 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
     }
-  };
+  }
+
   User.init({
     githubHandle: DataTypes.STRING,
     githubLogin: DataTypes.STRING,
-    address: DataTypes.STRING
+    address: DataTypes.STRING,
+    accessToken: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'user',
