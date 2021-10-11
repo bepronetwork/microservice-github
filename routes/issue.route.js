@@ -35,7 +35,10 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
 /* GET list issues. */
 router.get('/', asyncMiddleware(async (req, res, next) => {
   const whereCondition = {};
-
+  const limit = +req.query.limit || 1;
+  const page = +req.query.page || 20;
+  let offset = page * limit - limit;
+  
   if (req.query.filterState) {
     whereCondition.state = req.query.filterState;
   }
@@ -44,9 +47,17 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
     whereCondition.issueId = req.query.issueIds;
   }
 
-  const issues = await models.issue.findAll({ where: whereCondition, include: includeIssues, raw: true, nest: true });
+  const issues = await models.issue.findAndCountAll({ 
+    where: whereCondition, 
+    include: includeIssues, 
+    raw: true, 
+    nest: true,
+    offset,
+    limit 
+  });
 
-  return IssueService.getIssuesData(issues).then(data => res.json(data))
+  return IssueService.getIssuesData(issues.rows)
+  .then(data => res.json({data, nextPage: page+1, pages: (issues?.count/limit), count: issues?.count}))
 }));
 
 /* GET issue by issue id. */
