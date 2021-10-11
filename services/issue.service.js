@@ -1,5 +1,6 @@
 const GithubService = require('./github.service');
 const githubConfig = require('../config/github.config');
+const models = require(`../models`);
 
 const dCache = {}
 const TTL = 60 * 1000;
@@ -10,8 +11,9 @@ module.exports = class IssueService {
     if (dCache[issue.githubId]?.lastUpdated && +new Date() - dCache[issue.githubId]?.lastUpdated <= TTL)
       return dCache[issue.githubId];
 
-    const repo = await models.repositories.findOne({where: {id: issue.repository_id}})
-    const githubIssue = await GithubService.getIssueById(issue.githubId, repo?.githubPath);
+    let repoPath = issue?.repo || (await models.repositories.findOne({where: {id: issue.repository_id}}))?.githubPath;
+
+    const githubIssue = await GithubService.getIssueById(issue.githubId, repoPath);
 
     const issueData = {
       lastUpdated: +new Date(),
