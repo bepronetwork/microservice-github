@@ -40,8 +40,10 @@ module.exports = class BeproService {
 
     const pullRequest = await mergeProposal.getPullRequest();
 
-    await GithubService.mergePullRequest(pullRequest.githubId);
-    await GithubService.closeIssue(issue.githubId);
+    const repo = await models.repositories.findOne({where: {id: issue?.repository_id}})
+
+    await GithubService.mergePullRequest(pullRequest.githubId, repo?.githubPath);
+    await GithubService.closeIssue(issue.githubId, repo?.githubPath);
 
     issue.state = 'closed';
     await issue.save();
@@ -51,7 +53,8 @@ module.exports = class BeproService {
     const eventData = event.returnValues;
     // Close issue on github
     const issue = await models.issue.findOne({where: {issueId: eventData.id,}});
-    await GithubService.closeIssue(issue.githubId);
+    const repo = await models.repositories.findOne({where: {id: issue?.repository_id}})
+    await GithubService.closeIssue(issue.githubId, repo?.githubPath);
     issue.state = 'canceled';
     await issue.save();
   }

@@ -15,7 +15,11 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
   if(!req.body.creatorGithub)
     return res.status(422).json(`creatorGithub is required`);
 
-  const githubId = req.body.githubIssueId || (await GithubService.createIssue(req.body.title, req.body.description))?.number?.toString()
+  const repository = await models.repositories.findOne({where: {id: req.body.repository_id}});
+  if (!repository)
+    return res.status(422).json(`repository not found`)
+
+  const githubId = req.body.githubIssueId || (await GithubService.createIssue(req.body.title, req.body.description, repository?.githubPath,))?.number?.toString()
 
   if (await models.issue.findOne({where: {githubId}}))
     return res.status(409).json(`issueId already exists on database`);
@@ -105,8 +109,9 @@ router.get('/github/:id', asyncMiddleware(async (req, res, next) => {
 }));
 
 /* GET Comments for issue. */
-router.get('/github/:id/comments', asyncMiddleware(async (req, res, next) => {
-  const githubComments = await GithubService.getIssueComments(req.params.id);
+router.get('/github/:id/:repo/comments', asyncMiddleware(async (req, res, next) => {
+  const repo = await models.repositories.findOne({where: {id: req.params.repo}})
+  const githubComments = await GithubService.getIssueComments(req.params.id, repo?.githubPath);
 
   return res.json(githubComments);
 }));
@@ -121,7 +126,8 @@ router.post('/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
         },
       });
 
-    const githubPR = await GithubService.createPullRequest(req.body.title, req.body.description, req.body.username);
+    const repo = await models.repositories.findOne({where: {id: issue?.repository_id}});
+    const githubPR = await GithubService.createPullRequest(req.body.title, req.body.description, req.body.username, repo?.githubPath);
 
     await models.pullRequest.create({
       issueId: issue.id,

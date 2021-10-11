@@ -23,7 +23,8 @@ try {
 
       for (const issue of issues) {
         try {
-          await GithubService.removeDraftLabelFromIssue(issue.githubId);
+          const repo = await models.repositories.findOne({where: {id: issue.repository_id}})
+          await GithubService.removeDraftLabelFromIssue(issue.githubId, repo?.githubPath);
         } catch (error) {
           // label not exists, ignoring
         }

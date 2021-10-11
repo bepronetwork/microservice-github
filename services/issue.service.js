@@ -10,7 +10,8 @@ module.exports = class IssueService {
     if (dCache[issue.githubId]?.lastUpdated && +new Date() - dCache[issue.githubId]?.lastUpdated <= TTL)
       return dCache[issue.githubId];
 
-    const githubIssue = await GithubService.getIssueById(issue.githubId);
+    const repo = await models.repositories.findOne({where: {id: issue.repository_id}})
+    const githubIssue = await GithubService.getIssueById(issue.githubId, repo?.githubPath);
 
     const issueData = {
       lastUpdated: +new Date(),

@@ -11,8 +11,9 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
 }));
 
 /* GET Forked Repo by Github login*/
-router.get('/repo/:ghhandler', asyncMiddleware(async (req, res, next) => {
-  const forks = await GithubService.getForkedRepo(req.params.ghhandler);
+router.get('/repo/:handle/:repo', asyncMiddleware(async (req, res, next) => {
+  const repo = await models.repositories.findOne({where: {id: req.params.repo}})
+  const forks = await GithubService.getForkedRepo(req.params.handle, repo?.githubPath);
 
   return res.json(forks);
 }));

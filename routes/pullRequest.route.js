@@ -13,7 +13,8 @@ router.get('/:id/participants', asyncMiddleware(async (req, res, next) => {
       },
     });
 
-  const commits = await GithubService.getPullRequestCommits(pullRequest.githubId);
+  const repo = await models.repositories.findOne({where: {id: issue?.repository_id}})
+  const commits = await GithubService.getPullRequestCommits(pullRequest.githubId, repo?.githubPath);
 
   const participantsMap = new Map()
 
@@ -37,8 +38,9 @@ router.get('/:id/participants', asyncMiddleware(async (req, res, next) => {
   return res.json(participants);
 }));
 
-router.get(`/last/:total`, asyncMiddleware(async (req, res, next) => {
-  const pullRequests = await GithubService.getLastPullRequests(req.params.id);
+router.get(`/last/:total/:repo`, asyncMiddleware(async (req, res, next) => {
+  const repo = await models.repositories.findOne({where: {id: req.params.repo}});
+  const pullRequests = await GithubService.getLastPullRequests(req.params.total, repo?.githubPath);
 
   const prs = await models.pullRequest.findAll({ where: {githubId: (pullRequests || []).map(({number}) => number.toString())}});
   const issues = await models.issue.findAll({where: {issueId: (prs || []).map(({issueId}) => issueId.toString())}})

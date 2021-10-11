@@ -19,7 +19,9 @@ router.post('/working/:issueId', asyncMiddleware(async (req, res, next) => {
     address: req.body.address,
   });
 
-  await GithubService.createComment(issue.githubId, `${developer.githubHandle} is working on this`)
+  const repo = await models.repositories.findOne({where: {id: issue?.repository_id}})
+
+  await GithubService.createComment(issue.githubId, `${developer.githubHandle} is working on this`, repo?.githubPath)
 
   return res.json('ok');
 }));
