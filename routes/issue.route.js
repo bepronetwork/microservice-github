@@ -55,9 +55,9 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
     offset,
     limit 
   });
-
+  const maxPage = parseInt((issues?.count/limit),10);
   return IssueService.getIssuesData(issues.rows)
-  .then(data => res.json({issuesData: data, nextPage: page + 1, pages: (issues?.count/limit), count: issues?.count}))
+  .then(data => res.json({issuesData: data, nextPage: page + 1 <= maxPage , currentPage: page, pages: maxPage, count: issues?.count}))
 }));
 
 /* GET issue by issue id. */
