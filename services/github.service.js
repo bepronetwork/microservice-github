@@ -26,9 +26,8 @@ module.exports = class GithubService {
 
   static async createIssue(title, description, repoPath) {
     // Create issue
-    const [owner, repo] = repoPath.split(`/`);
     const data = await octokit.rest.issues.create({
-      owner, repo,
+      ...getOwnerRepo(repoPath),
       title,
       body: description,
       labels: ['draft']
@@ -135,14 +134,15 @@ module.exports = class GithubService {
     return data.data;
   }
 
-  static async getLastPullRequests(amount = 3, repoPath) {
+  static async getLastPullRequests(amount = 3) {
     // Get last N pull requests
     const filterMerged = ({merged_at}) => !!merged_at;
     const sortMerged = ({merged_at: a}, {merged_at: b}) =>
       ((a = new Date(a), b = new Date(b)), a > b ? -1 : a < b ? 1 : 0);
 
     return octokit.rest.pulls.list({
-      ...getOwnerRepo(repoPath),
+      owner: githubConfig.githubOwner,
+      repo: githubConfig.githubRepo,
       state: `closed`
     }).then((response) => response?.data?.filter(filterMerged).sort(sortMerged).slice(0, amount))
   }

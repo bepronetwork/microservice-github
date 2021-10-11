@@ -38,9 +38,8 @@ router.get('/:id/participants', asyncMiddleware(async (req, res, next) => {
   return res.json(participants);
 }));
 
-router.get(`/last/:total/:repo`, asyncMiddleware(async (req, res, next) => {
-  const repo = await models.repositories.findOne({where: {id: req.params.repo}});
-  const pullRequests = await GithubService.getLastPullRequests(req.params.total, repo?.githubPath);
+router.get(`/last/:total`, asyncMiddleware(async (req, res, next) => {
+  const pullRequests = await GithubService.getLastPullRequests(req.params.total);
 
   const prs = await models.pullRequest.findAll({ where: {githubId: (pullRequests || []).map(({number}) => number.toString())}});
   const issues = await models.issue.findAll({where: {issueId: (prs || []).map(({issueId}) => issueId.toString())}})
