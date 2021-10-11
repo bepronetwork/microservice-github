@@ -27,7 +27,6 @@ module.exports = class IssueService {
       developers: issue.developers,
       pullRequests: issue.pullRequests,
       mergeProposals: issue.mergeProposals,
-      repo: githubConfig.githubRepo
     }
 
     dCache[issue.githubId] = issueData;
@@ -41,7 +40,7 @@ module.exports = class IssueService {
       const githubIssue = await IssueService.getIssueData(issue);
       if (!githubIssue)
         return null;
-      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments, repo: githubConfig.githubRepo});
+      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments,});
     }
 
     return Promise.all(issues.map(mergeIssueData).filter(issue => !!issue))

@@ -47,6 +47,18 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
 
   const issues = await models.issue.findAll({ where: whereCondition, include: includeIssues, raw: true, nest: true });
 
+  const reposKnown = {};
+
+  for (const issue of issues) {
+    if (reposKnown[issue.repository_id]) {
+      issue.repo = reposKnown[issue.repository_id];
+    } else {
+      const repo = await models.repositories.findOne({where: {id: issue.repository_id}})
+      issue.repo = repo?.githubPath;
+      reposKnown[issue.repository_id] = repo?.githubPath;
+    }
+  }
+
   return IssueService.getIssuesData(issues).then(data => res.json(data))
 }));
 
