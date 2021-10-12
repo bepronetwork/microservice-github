@@ -4,10 +4,27 @@ const asyncMiddleware = require('../middlewares/async.middleware');
 const IssueService = require('../services/issue.service');
 const GithubService = require('../services/github.service');
 const models = require('../models');
+const paginate = require("../middlewares/paginate.middleware");
 const {Op} = require("sequelize");
 
 
 const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
+
+async function parseIssuesWithData(issues = []) {
+  const reposKnown = {};
+
+  for (const issue of issues) {
+    if (reposKnown[issue.repository_id]) {
+      issue.repo = reposKnown[issue.repository_id];
+    } else {
+      const repo = await models.repositories.findOne({where: {id: issue.repository_id}})
+      issue.repo = repo?.githubPath;
+      reposKnown[issue.repository_id] = repo?.githubPath;
+    }
+  }
+
+  return IssueService.getIssuesData(issues)
+}
 
 /* POST create issue. */
 router.post('/', asyncMiddleware(async (req, res, next) => {
@@ -39,31 +56,26 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
 
 /* GET list issues. */
 router.get('/', asyncMiddleware(async (req, res, next) => {
-  const whereCondition = {};
-
-  if (req.query.filterState) {
-    whereCondition.state = req.query.filterState;
-  }
-
-  if (req.query.issueIds) {
-    whereCondition.issueId = req.query.issueIds;
-  }
-
-  const issues = await models.issue.findAll({ where: whereCondition, include: includeIssues, raw: true, nest: true });
-
-  const reposKnown = {};
-
-  for (const issue of issues) {
-    if (reposKnown[issue.repository_id]) {
-      issue.repo = reposKnown[issue.repository_id];
-    } else {
-      const repo = await models.repositories.findOne({where: {id: issue.repository_id}})
-      issue.repo = repo?.githubPath;
-      reposKnown[issue.repository_id] = repo?.githubPath;
+  const whereCondition = {
+    state: {
+      [Op.not]: `pending`,
     }
-  }
+  };
 
-  return IssueService.getIssuesData(issues).then(data => res.json(data))
+  const {filterState, issueId, repoId} = req.query || {};
+
+  if (filterState)
+    whereCondition.state = filterState;
+
+  if (issueId)
+    whereCondition.issueId = issueId;
+
+  if (repoId)
+    whereCondition.repository_id = repoId;
+
+  const issues = await models.issue.findAndCountAll(paginate({ where: whereCondition, include: includeIssues, raw: true, nest: true }, req.query));
+
+  return parseIssuesWithData(issues?.rows).then(rows => res.json({rows, count: issues?.count}))
 }));
 
 /* GET issue by issue id. */
@@ -104,8 +116,10 @@ router.get('/github/:id', asyncMiddleware(async (req, res, next) => {
         githubId: req.params.id
       },
       include: includeIssues,
+      raw: true, nest: true,
     });
-  return res.json(await IssueService.getIssueData(issue));
+  const [_issue] = await parseIssuesWithData([issue])
+  return res.json(_issue);
 }));
 
 /* PUT update issue by github id */
@@ -204,18 +218,13 @@ router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
 
 /* GET issue by github login. */
 router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
-  const issues = await models.issue.findAll({
-    where:{
-      creatorGithub: req.params.ghlogin
-    },
-    include: includeIssues });
+  const issues = await models.issue.findAndCountAll(
+    paginate({ where:{ creatorGithub: req.params.ghlogin }, include: includeIssues, raw: true, nest: true }, req.query)
+  );
 
-  const listOfIssues = [];
-  for (const issue of issues) {
-    listOfIssues.push(await IssueService.getIssueData(issue));
-  }
+  const rows = await parseIssuesWithData(issues?.rows);
 
-  return res.json(listOfIssues);
+  res.json({rows, count: issues?.count});
 }));
 
 /* PATCH issueId if no issueId  */
