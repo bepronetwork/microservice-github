@@ -196,10 +196,12 @@ router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
 /* GET issue by github login. */
 router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
   const issues = await models.issue.findAndCountAll(
-    paginate({ where:{ creatorGithub: req.params.ghlogin }, include: includeIssues }, req.query)
+    paginate({ where:{ creatorGithub: req.params.ghlogin }, include: includeIssues, raw: true, nest: true }, req.query)
   );
 
-  return parseIssuesWithData(issues?.rows).then(rows => res.json({rows, count: issues?.count}))
+  const rows = await parseIssuesWithData(issues?.rows);
+
+  res.json({rows, count: issues?.count});
 }));
 
 /* PATCH issueId if no issueId  */

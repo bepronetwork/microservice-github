@@ -1,5 +1,8 @@
-function paginate(query = {}, {page = 0,} = {page: 0,}) {
+function paginate(query = {}, {page = 1,} = {page: 1,}) {
   const limit = 10;
+  page = Math.ceil(page);
+  if (page < 1)
+    page = 1;
   const offset = (page - 1) * limit;
   return ({
     ...query,
