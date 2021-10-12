@@ -116,8 +116,10 @@ router.get('/github/:id', asyncMiddleware(async (req, res, next) => {
         githubId: req.params.id
       },
       include: includeIssues,
+      raw: true, nest: true,
     });
-  return res.json(await IssueService.getIssueData(issue));
+  const [_issue] = await parseIssuesWithData([issue])
+  return res.json(_issue);
 }));
 
 /* GET Comments for issue. */
