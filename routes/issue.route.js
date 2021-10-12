@@ -62,13 +62,16 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
     }
   };
 
-  if (req.query.filterState) {
-    whereCondition.state = req.query.filterState;
-  }
+  const {filterState, issueId, repoId} = req.query || {};
 
-  if (req.query.issueIds) {
-    whereCondition.issueId = req.query.issueIds;
-  }
+  if (filterState)
+    whereCondition.state = filterState;
+
+  if (issueId)
+    whereCondition.issueId = issueId;
+
+  if (repoId)
+    whereCondition.repository_id = repoId;
 
   const issues = await models.issue.findAndCountAll(paginate({ where: whereCondition, include: includeIssues, raw: true, nest: true }, req.query));
 
