@@ -3,6 +3,7 @@ const githubConfig = require('../config/github.config');
 const octokit = new Octokit({ auth: githubConfig.githubToken });
 
 const ownerRepo = {owner: githubConfig.githubOwner, repo: githubConfig.githubRepo,}
+const ownerRepoPath = `${ownerRepo.owner}/${ownerRepo.repo}`;
 const mapData = ({data}) => data;
 //                      hrs * min * sec * ms
 const GITHUB_STATS_TTL = 24 * 60 * 60 * 1000
@@ -18,7 +19,7 @@ const githubForkStats = {
 }
 
 function getOwnerRepo(repoPath) {
-  const [owner, repo] = repoPath.split(`/`);
+  const [owner, repo] = (repoPath || ownerRepoPath).split(`/`);
   return ({owner, repo});
 }
 
