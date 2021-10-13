@@ -151,11 +151,12 @@ router.put('/:id', asyncMiddleware(async (req, res, next) => {
 }));
 
 /* GET issue by github id. */
-router.get('/github/:id', asyncMiddleware(async (req, res, next) => {
+router.get('/github/:repoId/:id', asyncMiddleware(async (req, res, next) => {
   const issue = await models.issue.findOne(
     {
       where: {
-        githubId: req.params.id
+        githubId: req.params.id,
+        repository_id: req.params.repoId,
       },
       include: includeIssues,
       raw: true, nest: true,
