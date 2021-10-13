@@ -232,7 +232,7 @@ router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
 
 /* PATCH issueId if no issueId  */
 router.patch(`/github/:ghId/issueId/:scId`, asyncMiddleware(async (req, res,) => {
-  return models.issue.update({issueId: req.params.scId, state: `draft`}, {where: {githubId: req.params.ghId, issueId: null}})
+  return models.issue.update({githubId: req.params.scId, state: `draft`}, {where: {githubId: req.params.ghId, issueId: null}})
     .then(result => {
       if (!result[0])
         return res.status(422).json(`nok`)

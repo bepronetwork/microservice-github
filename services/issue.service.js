@@ -5,11 +5,16 @@ const models = require(`../models`);
 const dCache = {}
 const TTL = 60 * 1000;
 
+function getId(issue) {
+  return issue?.issueId || [issue.repository_id, issue.githubId].join(`/`)
+}
+
 module.exports = class IssueService {
 
   static async getIssueData(issue) {
-    if (dCache[issue.githubId]?.lastUpdated && +new Date() - dCache[issue.githubId]?.lastUpdated <= TTL)
-      return dCache[issue.githubId];
+    const iid = getId(issue);
+    if (dCache[iid]?.lastUpdated && +new Date() - dCache[iid]?.lastUpdated <= TTL)
+      return dCache[iid];
 
     let repoPath = issue?.repo || (await models.repositories.findOne({where: {id: issue.repository_id}}))?.githubPath;
 
@@ -32,7 +37,7 @@ module.exports = class IssueService {
       mergeProposals: issue.mergeProposals,
     }
 
-    dCache[issue.githubId] = issueData;
+    dCache[iid] = issueData;
 
     return issueData;
   }
