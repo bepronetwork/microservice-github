@@ -57,9 +57,12 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
 /* GET list issues. */
 router.get('/', asyncMiddleware(async (req, res, next) => {
   const whereCondition = {
-    state: {
-      [Op.not]: `pending`,
-    }
+    // state: {
+    //   [Op.not]: `pending`,
+    // },
+    // issueId: {
+    //   [Op.not]: null
+    // }
   };
 
   const {filterState, issueId, repoId} = req.query || {};
@@ -231,9 +234,13 @@ router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
 }));
 
 /* PATCH issueId if no issueId  */
-router.patch(`/github/:ghId/issueId/:scId`, asyncMiddleware(async (req, res,) => {
-  return models.issue.update({githubId: req.params.scId, state: `draft`}, {where: {githubId: req.params.ghId, issueId: null}})
+router.patch(`/github/:ghId/issueId/:repoId/:scId`, asyncMiddleware(async (req, res,) => {
+  console.log(`params`, req.params)
+  const {repoId, scId} = req.params;
+  const issueId = [repoId,scId].join(`/`);
+  return models.issue.update({issueId, state: `draft`}, {where: {githubId: req.params.ghId, issueId: null}})
     .then(result => {
+      console.log('result', result);
       if (!result[0])
         return res.status(422).json(`nok`)
 
