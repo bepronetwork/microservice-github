@@ -6,6 +6,7 @@ const GithubService = require('../services/github.service');
 const models = require('../models');
 const paginate = require("../middlewares/paginate.middleware");
 const {Op} = require("sequelize");
+const {subWeeks, subMonths, subYears, subHours} = require('date-fns')
 
 
 const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
@@ -57,15 +58,18 @@ router.post('/', asyncMiddleware(async (req, res, next) => {
 /* GET list issues. */
 router.get('/', asyncMiddleware(async (req, res, next) => {
   const whereCondition = {
-    state: {
-      [Op.not]: `pending`,
-    }
+    // state: {
+    //   [Op.not]: `pending`,
+    // },
+    // issueId: {
+    //   [Op.not]: null
+    // }
   };
 
-  const {filterState, issueId, repoId} = req.query || {};
+  const {state, issueId, repoId, time} = req.query || {};
 
-  if (filterState)
-    whereCondition.state = filterState;
+  if (state)
+    whereCondition.state = state;
 
   if (issueId)
     whereCondition.issueId = issueId;
@@ -73,18 +77,56 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
   if (repoId)
     whereCondition.repository_id = repoId;
 
+  if (time) {
+
+    let fn;
+    if (time === `week`)
+      fn = subWeeks
+    if (time === `month`)
+      fn = subMonths
+    if (time === `year`)
+      fn = subYears
+    if (time === `hour`)
+      fn = subHours
+
+    if (!fn)
+      return res.status(422).json(`Unable to parse date`);
+
+    whereCondition.createdAt = {[Op.gt]: fn(+new Date(), 1)}
+  }
+
+
   const issues = await models.issue.findAndCountAll(paginate({ where: whereCondition, include: includeIssues, raw: true, nest: true }, req.query));
 
   return parseIssuesWithData(issues?.rows).then(rows => res.json({rows, count: issues?.count}))
 }));
 
+router.get(`/pending`, asyncMiddleware(async (req, res,) => {
+  const {login, address, repoId, githubId} = req.query || {};
+  const where = {state: `pending`};
+
+  if (login)
+    where.creatorGithub = login;
+
+  if (address)
+    where.creatorAddress = {[Op.substring]: address};
+
+  if (repoId)
+    where.repository_id = repoId;
+
+  if (githubId)
+    where.githubId = githubId;
+
+  const issues = await models.issue.findAll({where, raw: true, nest: true});
+
+  return parseIssuesWithData(issues).then(data => res.json(data))
+}))
+
 /* GET issue by issue id. */
-router.get('/:id', asyncMiddleware(async (req, res, next) => {
+router.get('/:repoId/:id', asyncMiddleware(async (req, res, next) => {
   const issue = await models.issue.findOne(
     {
-      where: {
-        issueId: req.params.id
-      },
+      where: {issueId: [req.params.repoId, req.params.id].join(`/`)},
       include: includeIssues,
     });
   return res.json(await IssueService.getIssueData(issue));
@@ -219,7 +261,7 @@ router.post('/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
 /* GET issue by github login. */
 router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
   const issues = await models.issue.findAndCountAll(
-    paginate({ where:{ creatorGithub: req.params.ghlogin }, include: includeIssues, raw: true, nest: true }, req.query)
+    paginate({ where:{ creatorGithub: req.params.ghlogin, state: {[Op.not]: `pending`} }, include: includeIssues, raw: true, nest: true }, req.query)
   );
 
   const rows = await parseIssuesWithData(issues?.rows);
@@ -228,9 +270,13 @@ router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
 }));
 
 /* PATCH issueId if no issueId  */
-router.patch(`/github/:ghId/issueId/:scId`, asyncMiddleware(async (req, res,) => {
-  return models.issue.update({issueId: req.params.scId, state: `draft`}, {where: {githubId: req.params.ghId, issueId: null}})
+router.patch(`/github/:ghId/issueId/:repoId/:scId`, asyncMiddleware(async (req, res,) => {
+  console.log(`params`, req.params)
+  const {repoId, scId} = req.params;
+  const issueId = [repoId,scId].join(`/`);
+  return models.issue.update({issueId, state: `draft`}, {where: {githubId: req.params.ghId, issueId: null}})
     .then(result => {
+      console.log('result', result);
       if (!result[0])
         return res.status(422).json(`nok`)
 
