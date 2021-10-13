@@ -6,6 +6,7 @@ const GithubService = require('../services/github.service');
 const models = require('../models');
 const paginate = require("../middlewares/paginate.middleware");
 const {Op} = require("sequelize");
+const {subWeeks, subMonths, subYears, subHours} = require('date-fns')
 
 
 const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
@@ -65,16 +66,35 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
     // }
   };
 
-  const {filterState, issueId, repoId} = req.query || {};
+  const {state, issueId, repoId, time} = req.query || {};
 
-  if (filterState)
-    whereCondition.state = filterState;
+  if (state)
+    whereCondition.state = state;
 
   if (issueId)
     whereCondition.issueId = issueId;
 
   if (repoId)
     whereCondition.repository_id = repoId;
+
+  if (time) {
+
+    let fn;
+    if (time === `week`)
+      fn = subWeeks
+    if (time === `month`)
+      fn = subMonths
+    if (time === `year`)
+      fn = subYears
+    if (time === `hour`)
+      fn = subHours
+
+    if (!fn)
+      return res.status(422).json(`Unable to parse date`);
+
+    whereCondition.createdAt = {[Op.gt]: fn(+new Date(), 1)}
+  }
+
 
   const issues = await models.issue.findAndCountAll(paginate({ where: whereCondition, include: includeIssues, raw: true, nest: true }, req.query));
 
@@ -103,12 +123,10 @@ router.get(`/pending`, asyncMiddleware(async (req, res,) => {
 }))
 
 /* GET issue by issue id. */
-router.get('/:id', asyncMiddleware(async (req, res, next) => {
+router.get('/:repoId/:id', asyncMiddleware(async (req, res, next) => {
   const issue = await models.issue.findOne(
     {
-      where: {
-        issueId: req.params.id
-      },
+      where: {issueId: [req.params.repoId, req.params.id].join(`/`)},
       include: includeIssues,
     });
   return res.json(await IssueService.getIssueData(issue));
