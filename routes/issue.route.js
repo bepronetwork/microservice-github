@@ -8,9 +8,6 @@ const paginate = require("../middlewares/paginate.middleware");
 const {Op} = require("sequelize");
 const {subWeeks, subMonths, subYears, subHours} = require('date-fns')
 
-
-const includeIssues = ['developers', 'pullRequests', 'mergeProposals'];
-
 async function parseIssuesWithData(issues = []) {
   const reposKnown = {};
 
@@ -25,6 +22,18 @@ async function parseIssuesWithData(issues = []) {
   }
 
   return IssueService.getIssuesData(issues)
+}
+
+async function composeIssues(issues) {
+  for (const issue of issues) {
+    const opts = {raw: true, nest: true, where: {issueId: issue?.id}};
+
+    const developers = await models.developer.findAll(opts);
+    const pullRequests = await models.pullRequest.findAll(opts)
+    const mergeProposals = await models.mergeProposal.findAll(opts)
+
+    Object.assign(issue, {developers, mergeProposals, pullRequests});
+  }
 }
 
 /* POST create issue. */
@@ -88,7 +97,9 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
     whereCondition.createdAt = {[Op.gt]: fn(+new Date(), 1)}
   }
 
-  const issues = await models.issue.findAndCountAll(paginate({ where: whereCondition, include: includeIssues, raw: true, nest: true }, req.query));
+  const issues = await models.issue.findAndCountAll(paginate({ where: whereCondition, raw: true, nest: true }, req.query));
+
+  await composeIssues(issues?.rows);
 
   return parseIssuesWithData(issues?.rows).then(rows => res.json({rows, count: issues?.count}))
 }));
@@ -119,8 +130,9 @@ router.get('/:repoId/:id', asyncMiddleware(async (req, res, next) => {
   const issue = await models.issue.findOne(
     {
       where: {issueId: [req.params.repoId, req.params.id].join(`/`)},
-      include: includeIssues,
     });
+
+  await composeIssues([issue]);
   return res.json(await IssueService.getIssueData(issue));
 }));
 
@@ -132,7 +144,6 @@ router.put('/:id', asyncMiddleware(async (req, res, next) => {
         where: {
           issueId: req.params.id
         },
-        include: includeIssues,
       });
       issue.state = req.body.state;
       issue.save()
@@ -150,9 +161,10 @@ router.get('/github/:repoId/:id', asyncMiddleware(async (req, res, next) => {
         githubId: req.params.id,
         repository_id: req.params.repoId,
       },
-      include: includeIssues,
       raw: true, nest: true,
     });
+
+  await composeIssues([issue]);
   const [_issue] = await parseIssuesWithData([issue])
   return res.json(_issue);
 }));
@@ -247,8 +259,10 @@ router.post('/:repoId/:id/mergeproposal', asyncMiddleware(async (req, res, next)
 /* GET issue by github login. */
 router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
   const issues = await models.issue.findAndCountAll(
-    paginate({ where:{ creatorGithub: req.params.ghlogin, state: {[Op.not]: `pending`} }, include: includeIssues, raw: true, nest: true }, req.query)
+    paginate({ where:{ creatorGithub: req.params.ghlogin, state: {[Op.not]: `pending`} }, raw: true, nest: true }, req.query)
   );
+
+  await composeIssues(issues?.rows);
 
   const rows = await parseIssuesWithData(issues?.rows);
 
