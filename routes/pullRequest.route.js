@@ -13,7 +13,15 @@ router.get('/:id/participants', asyncMiddleware(async (req, res, next) => {
       },
     });
 
+  const issue = await models.issue.findOne({where: {id: pullRequest?.issueId}});
+  if (!issue)
+    return res.status(422).json(`Issue not found`);
+
   const repo = await models.repositories.findOne({where: {id: issue?.repository_id}})
+
+  if (!repo)
+    return res.status(422).json(`Repo not found`);
+
   const commits = await GithubService.getPullRequestCommits(pullRequest.githubId, repo?.githubPath);
 
   const participantsMap = new Map()
