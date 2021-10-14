@@ -103,7 +103,7 @@ module.exports = class GithubService {
     // Create pull request
     const data = await octokit.rest.pulls.create({
       accept: 'application/vnd.github.v3+json',
-      ...getOwnerRepo(repoPath),
+      ...ownerRepo,
       title,
       body: description,
       head: `${username}:${githubConfig.githubMainBranch}`,
@@ -205,12 +205,12 @@ module.exports = class GithubService {
   }
 
   static async getForkedRepo(ghhandler, repo){
-    const data = await octokit.rest.repos.get({
-      repo,
-      owner: ghhandler,
-    })
-
-    return data.data
+    return octokit.rest.repos.get({repo: repo.split(`/`)[1], owner: ghhandler,})
+      .then(({data}) => data)
+      .catch((e) => {
+        console.error(`Failed to get repos for ${ghhandler} ${repo}`, e.message);
+        return null;
+      })
   }
 
   static async getForksAmountFor(repo = ``) {
