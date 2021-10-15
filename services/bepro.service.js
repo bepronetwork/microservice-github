@@ -52,7 +52,6 @@ module.exports = class BeproService {
 
   static async readRedemIssue(event) {
     const eventData = event.returnValues;
-    // Close issue on github
     const issueId = await BeproService.beproNetwork.getIssueById({issueId: eventData.id}).then(({cid}) => cid);
     const issue = await models.issue.findOne({where: {issueId,}});
     const repo = await models.repositories.findOne({where: {id: issue?.repository_id}})
@@ -73,7 +72,7 @@ module.exports = class BeproService {
 
     const error = (of = ``) => (error, ev = null) => {
       console.log(`EventError: ${of}\n`, error, `\n---`, !ev && `Error had no event` || ev);
-      if (error.code === 1006)
+      if (error?.code === 1006)
         BeproService.listenToEvents();
     }
 
