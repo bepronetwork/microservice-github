@@ -101,9 +101,11 @@ module.exports = class GithubService {
 
   static async createPullRequest(title, description, username, repoPath) {
     // Create pull request
+    const repo = getOwnerRepo(repoPath).repo;
     const data = await octokit.rest.pulls.create({
       accept: 'application/vnd.github.v3+json',
-      ...ownerRepo,
+      owner: ownerRepo.owner,
+      repo,
       title,
       body: description,
       head: `${username}:${githubConfig.githubMainBranch}`,
