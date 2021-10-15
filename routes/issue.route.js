@@ -26,6 +26,9 @@ async function parseIssuesWithData(issues = []) {
 
 async function composeIssues(issues) {
   for (const issue of issues) {
+    if (!issue?.id)
+      return;
+
     const opts = {raw: true, nest: true, where: {issueId: issue?.id}};
 
     const developers = await models.developer.findAll(opts);
@@ -131,6 +134,9 @@ router.get('/:repoId/:id', asyncMiddleware(async (req, res, next) => {
     {
       where: {issueId: [req.params.repoId, req.params.id].join(`/`)},
     });
+
+  if (!issue)
+    return res.status(404).json(null);
 
   await composeIssues([issue]);
   return res.json(await IssueService.getIssueData(issue));
