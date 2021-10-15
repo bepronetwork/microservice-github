@@ -141,6 +141,62 @@ router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
   res.json({rows, count: issues?.count});
 }));
 
+/* GET issue by github id. */
+router.get('/github/:repoId/:id', asyncMiddleware(async (req, res, next) => {
+  const issue = await models.issue.findOne(
+    {
+      where: {
+        githubId: req.params.id,
+        repository_id: req.params.repoId,
+      },
+      raw: true, nest: true,
+    });
+
+  await composeIssues([issue]);
+  const [_issue] = await parseIssuesWithData([issue])
+  return res.json(_issue);
+}));
+
+/* PUT update issue by github id */
+router.put('/github/:id', asyncMiddleware(async (req, res, next) => {
+  try {
+    const issue = await models.issue.findOne(
+      {
+        where: {
+          githubId: req.params.id
+        },
+        include: includeIssues,
+      });
+    issue.state = req.body.state;
+    issue.save()
+    return res.json(await IssueService.getIssueData(issue));
+  } catch (error) {
+    return res.status(400).json([`failed to update issue`]);
+  }
+}));
+
+/* GET Comments for issue. */
+router.get('/github/:id/:repo/comments', asyncMiddleware(async (req, res, next) => {
+  const repo = await models.repositories.findOne({where: {id: req.params.repo}})
+  const githubComments = await GithubService.getIssueComments(req.params.id, repo?.githubPath);
+
+  return res.json(githubComments);
+}));
+
+/* Get Merge proposal for issue. */
+router.get('/mergeproposal/:scMergeId/:issueId', asyncMiddleware(async (req, res, next) => {
+  const mergeProposal = await models.mergeProposal.findOne(
+    {
+      where: {
+        scMergeId: req.params.scMergeId,
+        issueId: req.params.issueId,
+      },
+      include: 'pullRequest'
+    });
+
+  return res.json(mergeProposal);
+}));
+
 /* GET issue by issue id. */
 router.get('/:repoId/:id', asyncMiddleware(async (req, res, next) => {
   const issue = await models.issue.findOne(
@@ -172,48 +228,6 @@ router.put('/:id', asyncMiddleware(async (req, res, next) => {
   }
 }));
 
-/* GET issue by github id. */
-router.get('/github/:repoId/:id', asyncMiddleware(async (req, res, next) => {
-  const issue = await models.issue.findOne(
-    {
-      where: {
-        githubId: req.params.id,
-        repository_id: req.params.repoId,
-      },
-      raw: true, nest: true,
-    });
-
-  await composeIssues([issue]);
-  const [_issue] = await parseIssuesWithData([issue])
-  return res.json(_issue);
-}));
-
-/* PUT update issue by github id */
-router.put('/github/:id', asyncMiddleware(async (req, res, next) => {
-  try {
-    const issue = await models.issue.findOne(
-      {
-        where: {
-          githubId: req.params.id
-        },
-        include: includeIssues,
-      });
-      issue.state = req.body.state;
-      issue.save()
-    return res.json(await IssueService.getIssueData(issue));
-  } catch (error) {
-    return res.status(400).json([`failed to update issue`]);
-  }
-}));
-
-/* GET Comments for issue. */
-router.get('/github/:id/:repo/comments', asyncMiddleware(async (req, res, next) => {
-  const repo = await models.repositories.findOne({where: {id: req.params.repo}})
-  const githubComments = await GithubService.getIssueComments(req.params.id, repo?.githubPath);
-
-  return res.json(githubComments);
-}));
-
 /* POST create PR for issue. */
 router.post('/:repoId/:id/pullrequest', asyncMiddleware(async (req, res, next) => {
   try{
@@ -241,20 +255,6 @@ router.post('/:repoId/:id/pullrequest', asyncMiddleware(async (req, res, next) =
     console.error(e);
     return res.status(e?.status || 400).json([...(e.response?.data?.errors || e.errors || [`failed to create pull request`])]);
   }
-}));
-
-/* Get Merge proposal for issue. */
-router.get('/mergeproposal/:scMergeId/:issueId', asyncMiddleware(async (req, res, next) => {
-  const mergeProposal = await models.mergeProposal.findOne(
-    {
-      where: {
-        scMergeId: req.params.scMergeId,
-        issueId: req.params.issueId,
-      },
-      include: 'pullRequest'
-    });
-
-  return res.json(mergeProposal);
 }));
 
 /* POST create Merge proposal for issue. */
