@@ -128,6 +128,19 @@ router.get(`/pending`, asyncMiddleware(async (req, res,) => {
   return parseIssuesWithData(issues).then(data => res.json(data))
 }))
 
+/* GET issue by github login. */
+router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
+  const issues = await models.issue.findAndCountAll(
+    paginate({ where:{ creatorGithub: req.params.ghlogin, state: {[Op.not]: `pending`} }, raw: true, nest: true }, req.query)
+  );
+
+  await composeIssues(issues?.rows);
+
+  const rows = await parseIssuesWithData(issues?.rows);
+
+  res.json({rows, count: issues?.count});
+}));
+
 /* GET issue by issue id. */
 router.get('/:repoId/:id', asyncMiddleware(async (req, res, next) => {
   const issue = await models.issue.findOne(
@@ -260,19 +273,6 @@ router.post('/:repoId/:id/mergeproposal', asyncMiddleware(async (req, res, next)
   });
 
   return res.json('ok');
-}));
-
-/* GET issue by github login. */
-router.get('/githublogin/:ghlogin', asyncMiddleware(async (req, res, next) => {
-  const issues = await models.issue.findAndCountAll(
-    paginate({ where:{ creatorGithub: req.params.ghlogin, state: {[Op.not]: `pending`} }, raw: true, nest: true }, req.query)
-  );
-
-  await composeIssues(issues?.rows);
-
-  const rows = await parseIssuesWithData(issues?.rows);
-
-  res.json({rows, count: issues?.count});
 }));
 
 /* PATCH issueId if no issueId  */
