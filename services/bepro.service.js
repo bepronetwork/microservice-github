@@ -61,12 +61,11 @@ module.exports = class BeproService {
   }
 
   static async readRecognizeAsFinished(event) {
-    const {id: issueId} = event.returnValues;
-    const _issue = await BeproService.beproNetwork.getIssueById({issueId});
-    const issue = await models.issue.findOne({where: {issueId: issue.cid}});
-    issue.state = `finished`;
-    await issue.save();
-
+    // const {id: issueId} = event.returnValues;
+    // const _issue = await BeproService.beproNetwork.getIssueById({issueId});
+    // const issue = await models.issue.findOne({where: {issueId: issue.cid}});
+    // issue.state = `finished`;
+    // await issue.save();
   }
 
   static async listenToEvents() {
