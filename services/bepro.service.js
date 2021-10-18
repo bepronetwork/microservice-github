@@ -60,6 +60,15 @@ module.exports = class BeproService {
     await issue.save();
   }
 
+  static async readRecognizeAsFinished(event) {
+    const {id: issueId} = event.returnValues;
+    const _issue = await BeproService.beproNetwork.getIssueById({issueId});
+    const issue = await models.issue.findOne({where: {issueId: issue.cid}});
+    issue.state = `finished`;
+    await issue.save();
+
+  }
+
   static async listenToEvents() {
     if (BeproService.starting)
       return;
@@ -71,7 +80,7 @@ module.exports = class BeproService {
     const contract = BeproService.beproNetwork.getWeb3Contract();
 
     const error = (of = ``) => (error, ev = null) => {
-      console.log(`EventError: ${of}\n`, error, `\n---`, !ev && `Error had no event` || ev);
+      console.log(`${of}\n`, `Error: ${!!error}`, error, `\n`, !ev && `No data` || ev);
       if (error?.code === 1006)
         BeproService.listenToEvents();
     }
@@ -88,6 +97,11 @@ module.exports = class BeproService {
       .on(`connected`, () => onConnected(`RedeemIssue`))
       .on(`error`, error(`RedeemIssue`))
       .on(`data`, (ev) => BeproService.readRedemIssue(ev));
+
+    contract.events.RecognizedAsFinished({}, error(`RecognizedAsFinished`))
+      .on(`connected`, () => onConnected(`RecognizedAsFinished`))
+      .on(`error`, error(`RecognizedAsFinished`))
+      .on(`data`, (ev) => BeproService.readRecognizeAsFinished(ev));
 
     console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
     BeproService.starting = 0;

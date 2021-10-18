@@ -295,7 +295,6 @@ router.post('/:repoId/:id/mergeproposal', asyncMiddleware(async (req, res, next)
 
 /* PATCH issueId if no issueId  */
 router.patch(`/github/:ghId/issueId/:repoId/:scId`, asyncMiddleware(async (req, res,) => {
-  console.log(`params`, req.params)
   const {repoId, scId} = req.params;
   const issueId = [repoId,scId].join(`/`);
   return models.issue.update({issueId, state: `draft`}, {where: {githubId: req.params.ghId, issueId: null}})

@@ -19,7 +19,6 @@ module.exports = class IssueService {
     let repoPath = issue?.repo || (await models.repositories.findOne({where: {id: issue.repository_id}}))?.githubPath;
 
     const githubIssue = await GithubService.getIssueById(issue.githubId, repoPath);
-
     const issueData = {
       lastUpdated: +new Date(),
       issueId: issue.issueId,
@@ -48,7 +47,7 @@ module.exports = class IssueService {
       const githubIssue = await IssueService.getIssueData(issue);
       if (!githubIssue)
         return null;
-      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments,});
+      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.numberOfComments,});
     }
 
     return Promise.all(issues.map(mergeIssueData).filter(issue => !!issue))
