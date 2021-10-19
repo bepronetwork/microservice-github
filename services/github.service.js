@@ -1,4 +1,5 @@
 const Octokit = require('octokit').Octokit;
+const { createAppAuth } = require("@octokit/auth-app");
 const githubConfig = require('../config/github.config');
 const octokit = new Octokit({ auth: githubConfig.githubToken });
 

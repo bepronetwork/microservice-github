@@ -11,6 +11,7 @@ const usersRoutes = require('./routes/user.route');
 const forksRoutes = require('./routes/fork.route');
 const reposRoute = require('./routes/repos.route');
 const pullRequestsRoutes = require('./routes/pullRequest.route');
+const mergeProposalRoutes = require('./routes/merge-proposal.route');
 const BeproService = require('./services/bepro.service');
 
 const app = express();
@@ -57,6 +58,7 @@ BeproService.listenToEvents().then((started) => {
   app.use('/forks', forksRoutes);
   app.use('/pullrequests', pullRequestsRoutes);
   app.use('/repos', reposRoute);
+  app.use('/merge', mergeProposalRoutes);
 
 // catch 404 and forward to error handler
   app.use((req, res, next) => {

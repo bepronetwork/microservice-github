@@ -16,6 +16,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@octokit/auth-app": "^3.6.1",
     "axios": "^0.21.4",
     "bepro-js": "github:bepronetwork/bepro-js#master",
     "body-parser": "^1.19.0",

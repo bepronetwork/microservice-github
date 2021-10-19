@@ -257,45 +257,8 @@ router.post('/:repoId/:id/pullrequest', asyncMiddleware(async (req, res, next) =
   }
 }));
 
-/* POST create Merge proposal for issue. */
-router.post('/:repoId/:id/mergeproposal', asyncMiddleware(async (req, res, next) => {
-  if (!req.body.githubLogin)
-    return res.status(422).json(`Wrong payload`);
-
-  const issue = await models.issue.findOne(
-    {
-      where: {
-        githubId: req.params.id,
-        repository_id: req.params.repoId,
-      },
-    });
-
-  if (!issue)
-    return res.status(422).json(`Issue not found`);
-
-  const pullRequest = await models.pullRequest.findOne(
-    {
-      where: {
-        githubId: req.body.pullRequestGithubId.toString(),
-      },
-    });
-
-  if (!pullRequest)
-    return res.status(422).json(`PR not found`);
-
-  await models.mergeProposal.create({
-    scMergeId: req.body.scMergeId,
-    issueId: issue?.id,
-    pullRequestId: pullRequest?.id,
-    githubLogin: req.body.githubLogin
-  });
-
-  return res.json('ok');
-}));
-
 /* PATCH issueId if no issueId  */
 router.patch(`/github/:ghId/issueId/:repoId/:scId`, asyncMiddleware(async (req, res,) => {
-  console.log(`params`, req.params)
   const {repoId, scId} = req.params;
   const issueId = [repoId,scId].join(`/`);
   return models.issue.update({issueId, state: `draft`}, {where: {githubId: req.params.ghId, issueId: null}})
