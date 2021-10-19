@@ -2,6 +2,7 @@ const Network = require('bepro-js').Network;
 const networkConfig = require('../config/network.config');
 const models = require('../models');
 const GithubService = require('../services/github.service');
+const Bus = require("../middlewares/event-bus.middleware");
 
 module.exports = class BeproService {
 
@@ -68,6 +69,33 @@ module.exports = class BeproService {
     // await issue.save();
   }
 
+  static async readMergeProposalCreated(event) {
+    const {id: scIssueId, mergeID: scMergeId, creator} = event.returnValues;
+    const issueId = await BeproService.beproNetwork.getIssueById({issueId: scIssueId}).then(({cid}) => cid);
+
+    const issue = await models.issue.findOne({where: {issueId,}});
+    if (!issue)
+      return console.log(`Failed to find an issue to add merge proposal`, event);
+
+    const user = await models.user.findOne({where: {address: creator.toLowerCase()}});
+    if (!user)
+      return console.log(`Could not find a user for ${creator}`, event);
+
+    const pr = await models.pullRequest.findOne({where: {issueId: issue?.id}});
+    if (!pr)
+      return console.log(`Could not find PR for db-issue ${issue?.id}`, event);
+
+    const merge = await models.mergeProposal.create({
+      scMergeId,
+      issueId: issue?.id,
+      pullRequestId: pr?.id,
+    });
+
+    console.log(`Emitting `, `mergeProposal:created:${user?.githubLogin}:${scIssueId}:${pr?.githubId}`);
+
+    Bus.emit(`mergeProposal:created:${user?.githubLogin}:${scIssueId}:${pr?.githubId}`, merge)
+  }
+
   static async listenToEvents() {
     if (BeproService.starting)
       return;
@@ -102,6 +130,11 @@ module.exports = class BeproService {
       .on(`error`, error(`RecognizedAsFinished`))
       .on(`data`, (ev) => BeproService.readRecognizeAsFinished(ev));
 
+    contract.events.MergeProposalCreated({}, error(`MergeProposalCreated`))
+      .on(`connected`, () => onConnected(`MergeProposalCreated`))
+      .on(`error`, error(`MergeProposalCreated`))
+      .on(`data`, (ev) => BeproService.readMergeProposalCreated(ev));
+
     console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
     BeproService.starting = 0;
 
@@ -135,5 +168,4 @@ module.exports = class BeproService {
   static async getEthAmountOf(address = ``) {
 
   }
-
 };
