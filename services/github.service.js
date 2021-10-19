@@ -83,6 +83,7 @@ module.exports = class GithubService {
     // Get Issue comments
     const data = await octokit.rest.repos.listForks({
       ...getOwnerRepo(repoPath),
+      per_page: 100,
     });
 
     return data.data

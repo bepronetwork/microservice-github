@@ -1,4 +1,4 @@
-function paginate(query = {}, {page = 1,} = {page: 1,}) {
+function paginate(query = {}, {page = 1,} = {page: 1,}, order = []) {
   const limit = 10;
   page = Math.ceil(page);
   if (page < 1)
@@ -8,6 +8,7 @@ function paginate(query = {}, {page = 1,} = {page: 1,}) {
     ...query,
     offset,
     limit,
+    order,
   })
 }
 

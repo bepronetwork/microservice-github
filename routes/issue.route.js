@@ -100,7 +100,7 @@ router.get('/', asyncMiddleware(async (req, res, next) => {
     whereCondition.createdAt = {[Op.gt]: fn(+new Date(), 1)}
   }
 
-  const issues = await models.issue.findAndCountAll(paginate({ where: whereCondition, raw: true, nest: true }, req.query));
+  const issues = await models.issue.findAndCountAll(paginate({ where: whereCondition, raw: true, nest: true }, req.query, [[req.query.sortBy || 'updatedAt', req.query.order || 'DESC']]));
 
   await composeIssues(issues?.rows);
 
