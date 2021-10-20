@@ -32,8 +32,8 @@
     "octokit": "^1.0.5",
     "pg": "^8.6.0",
     "pg-hstore": "^2.3.3",
-    "sequelize": "^6.6.2",
-    "sequelize-cli": "^6.2.0",
+    "sequelize": "~6.6.2",
+    "sequelize-cli": "~6.2.0",
     "web3": "^2.0.0-alpha.1"
   }
 }
