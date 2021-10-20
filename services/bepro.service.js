@@ -118,7 +118,7 @@ module.exports = class BeproService {
 
     contract.events.CloseIssue({}, error(`closeIssue`))
       .on(`connected`,() => onConnected(`CloseIssue`))
-      .on(`error`, (err, ev) => error(`CloseIssue`)(err, ev))
+      .on(`error`, error(`CloseIssue`))
       .on(`data`, (ev) => BeproService.readCloseIssue(ev));
 
     contract.events.RedeemIssue({}, error(`redeemIssue`))
