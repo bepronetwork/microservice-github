@@ -136,6 +136,8 @@ module.exports = class BeproService {
       .on(`error`, error(`MergeProposalCreated`))
       .on(`data`, (ev) => BeproService.readMergeProposalCreated(ev));
 
+    contract.getPastEvents('CloseIssue', {fromBlock: 0, toBlock: 'latest'}, console.log)
+
     console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
     BeproService.starting = 0;
 
