@@ -34,6 +34,7 @@ module.exports = class BeproService {
   }
 
   static async readCloseIssue(event) {
+    console.log(`Event`, event);
     const eventData = event.returnValues;
     // Merge PR and close issue on github
     const issueId = await BeproService.beproNetwork.getIssueById({issueId: eventData.id}).then(({cid}) => cid);
