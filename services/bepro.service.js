@@ -100,45 +100,53 @@ module.exports = class BeproService {
     if (BeproService.starting)
       return;
 
-    BeproService.starting = +new Date();
-    const started = await this.start();
-    if (!started) return;
+    return new Promise(async (resolve) => {
+      BeproService.starting = +new Date();
+      const started = await this.start();
+      if (!started) return;
 
-    const contract = BeproService.beproNetwork.getWeb3Contract();
+      const contract = BeproService.beproNetwork.getWeb3Contract();
 
-    const error = (of = ``) => (error, ev = null) => {
-      console.log(`${of}\n`, `Error: ${!!error}`, error, `\n`, !ev && `No data` || ev);
-      if (error?.code === 1006)
-        BeproService.listenToEvents();
-    }
+      const error = (of = ``) => (error, ev = null) => {
+        console.log(`${of}\n`, `Error: ${!!error}`, error, `\n`, !ev && `No data` || ev);
+        if (error?.code === 1006)
+          BeproService.listenToEvents();
+      }
 
-    const connecting = +new Date()
-    const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
+      const connecting = +new Date()
+      const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
 
-    contract.events.CloseIssue({}, error(`closeIssue`))
-      .on(`connected`,() => onConnected(`CloseIssue`))
-      .on(`error`, error(`CloseIssue`))
-      .on(`data`, (ev) => BeproService.readCloseIssue(ev));
+      contract.events.CloseIssue({}, error(`closeIssue`))
+        .on(`connected`,() => onConnected(`CloseIssue`))
+        .on(`error`, error(`CloseIssue`))
+        .on(`data`, (ev) => BeproService.readCloseIssue(ev));
 
-    contract.events.RedeemIssue({}, error(`redeemIssue`))
-      .on(`connected`, () => onConnected(`RedeemIssue`))
-      .on(`error`, error(`RedeemIssue`))
-      .on(`data`, (ev) => BeproService.readRedemIssue(ev));
+      contract.events.RedeemIssue({}, error(`redeemIssue`))
+        .on(`connected`, () => onConnected(`RedeemIssue`))
+        .on(`error`, error(`RedeemIssue`))
+        .on(`data`, (ev) => BeproService.readRedemIssue(ev));
 
-    contract.events.RecognizedAsFinished({}, error(`RecognizedAsFinished`))
-      .on(`connected`, () => onConnected(`RecognizedAsFinished`))
-      .on(`error`, error(`RecognizedAsFinished`))
-      .on(`data`, (ev) => BeproService.readRecognizeAsFinished(ev));
+      contract.events.RecognizedAsFinished({}, error(`RecognizedAsFinished`))
+        .on(`connected`, () => onConnected(`RecognizedAsFinished`))
+        .on(`error`, error(`RecognizedAsFinished`))
+        .on(`data`, (ev) => BeproService.readRecognizeAsFinished(ev));
 
-    contract.events.MergeProposalCreated({}, error(`MergeProposalCreated`))
-      .on(`connected`, () => onConnected(`MergeProposalCreated`))
-      .on(`error`, error(`MergeProposalCreated`))
-      .on(`data`, (ev) => BeproService.readMergeProposalCreated(ev));
+      contract.events.MergeProposalCreated({}, error(`MergeProposalCreated`))
+        .on(`connected`, () => onConnected(`MergeProposalCreated`))
+        .on(`error`, error(`MergeProposalCreated`))
+        .on(`data`, (ev) => BeproService.readMergeProposalCreated(ev));
 
-    console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
-    BeproService.starting = 0;
+      BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`connect`, () => {
+        onConnected(`CurrentProvider`);
+        resolve(true);
+      })
 
-    return true;
+      BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`close`, error(`CurrentProvider`))
+      BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`error`, error(`CurrentProvider`))
+
+      console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
+      BeproService.starting = 0;
+    })
   }
 
   static async getOpenIssues() {
