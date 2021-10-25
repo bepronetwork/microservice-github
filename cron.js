@@ -8,7 +8,7 @@ try {
   console.log('Starting CronJob...');
   const stamp = +new Date();
   new CronJob({
-    cronTime: '00 0 8 * * *',
+    cronTime: '00 8 * * *',
     onTick: async () => {
       console.log('##### Checking draft issues to move to open');
       const issues = await models.issue.findAll(
