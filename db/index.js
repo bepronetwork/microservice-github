@@ -1,7 +1,7 @@
 //import db client
 import { Client } from 'pg';
 
-class DB{
+class DB {
 
     constructor(){
         this.client = new Client({});
@@ -11,7 +11,7 @@ class DB{
         await this.client.connect();
     }
 
-    end = () => {
+    end = async () => {
         await this.client.end()
     }
 }

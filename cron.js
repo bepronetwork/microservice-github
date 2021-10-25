@@ -8,7 +8,7 @@ try {
   console.log('Starting CronJob...');
   const stamp = +new Date();
   new CronJob({
-    cronTime: '00 0 8 * * *',
+    cronTime: '00 8 * * *',
     onTick: async () => {
       console.log('##### Checking draft issues to move to open');
       const issues = await models.issue.findAll(
@@ -23,7 +23,8 @@ try {
 
       for (const issue of issues) {
         try {
-          await GithubService.removeDraftLabelFromIssue(issue.githubId);
+          const repo = await models.repositories.findOne({where: {id: issue.repository_id}})
+          await GithubService.removeDraftLabelFromIssue(issue.githubId, repo?.githubPath);
         } catch (error) {
           // label not exists, ignoring
         }

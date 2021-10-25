@@ -1,17 +1,24 @@
 const GithubService = require('./github.service');
 const githubConfig = require('../config/github.config');
+const models = require(`../models`);
 
 const dCache = {}
 const TTL = 60 * 1000;
 
+function getId(issue) {
+  return issue?.issueId || [issue.repository_id, issue.githubId].join(`/`)
+}
+
 module.exports = class IssueService {
 
   static async getIssueData(issue) {
-    if (dCache[issue.githubId]?.lastUpdated && +new Date() - dCache[issue.githubId]?.lastUpdated <= TTL)
-      return dCache[issue.githubId];
+    const iid = getId(issue);
+    if (dCache[iid]?.lastUpdated && +new Date() - dCache[iid]?.lastUpdated <= TTL)
+      return dCache[iid];
 
-    const githubIssue = await GithubService.getIssueById(issue.githubId);
+    let repoPath = issue?.repo || (await models.repositories.findOne({where: {id: issue.repository_id}}))?.githubPath;
 
+    const githubIssue = await GithubService.getIssueById(issue.githubId, repoPath);
     const issueData = {
       lastUpdated: +new Date(),
       issueId: issue.issueId,
@@ -27,10 +34,9 @@ module.exports = class IssueService {
       developers: issue.developers,
       pullRequests: issue.pullRequests,
       mergeProposals: issue.mergeProposals,
-      repo: githubConfig.githubRepo
     }
 
-    dCache[issue.githubId] = issueData;
+    dCache[iid] = issueData;
 
     return issueData;
   }
@@ -41,7 +47,7 @@ module.exports = class IssueService {
       const githubIssue = await IssueService.getIssueData(issue);
       if (!githubIssue)
         return null;
-      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.comments, repo: githubConfig.githubRepo});
+      return ({...issue, title: githubIssue?.title, body: githubIssue?.body, numberOfComments: githubIssue?.numberOfComments,});
     }
 
     return Promise.all(issues.map(mergeIssueData).filter(issue => !!issue))

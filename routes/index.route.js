@@ -39,4 +39,6 @@ router.get(`/ratelimit`, async(req, res) => {
   res.json(await GithubService.rateLimit());
 })
 
+// router.post(`/close/:id/:owner/:repo`, asyncMiddleware(async (req, res,) => res.json(await GithubService.closeIssue(req.params.id, `${req.params.owner}/${req.params.repo}`))))
+
 module.exports = router;

@@ -1,8 +1,10 @@
 const Octokit = require('octokit').Octokit;
+const { createAppAuth } = require("@octokit/auth-app");
 const githubConfig = require('../config/github.config');
 const octokit = new Octokit({ auth: githubConfig.githubToken });
 
 const ownerRepo = {owner: githubConfig.githubOwner, repo: githubConfig.githubRepo,}
+const ownerRepoPath = `${ownerRepo.owner}/${ownerRepo.repo}`;
 const mapData = ({data}) => data;
 //                      hrs * min * sec * ms
 const GITHUB_STATS_TTL = 24 * 60 * 60 * 1000
@@ -17,12 +19,17 @@ const githubForkStats = {
   data: {},
 }
 
+function getOwnerRepo(repoPath) {
+  const [owner, repo] = (repoPath || ownerRepoPath).split(`/`);
+  return ({owner, repo});
+}
+
 module.exports = class GithubService {
 
-  static async createIssue(title, description) {
+  static async createIssue(title, description, repoPath) {
     // Create issue
     const data = await octokit.rest.issues.create({
-      ...ownerRepo,
+      ...getOwnerRepo(repoPath),
       title,
       body: description,
       labels: ['draft']
@@ -31,10 +38,10 @@ module.exports = class GithubService {
     return data.data;
   }
 
-  static async closeIssue(issueId) {
+  static async closeIssue(issueId, repoPath) {
     // Close issue
     const data = await octokit.rest.issues.update({
-      ...ownerRepo,
+      ...getOwnerRepo(repoPath),
       issue_number: issueId,
       state: 'closed',
     });
@@ -42,10 +49,10 @@ module.exports = class GithubService {
     return data.data;
   }
 
-  static async removeDraftLabelFromIssue(issueId) {
+  static async removeDraftLabelFromIssue(issueId, repoPath) {
     // Remove Draft label from issue
     const data = await octokit.rest.issues.removeLabel({
-      ...ownerRepo,
+      ...getOwnerRepo(repoPath),
       issue_number: issueId,
       name: 'draft'
     });
@@ -53,39 +60,40 @@ module.exports = class GithubService {
     return data.data;
   }
 
-  static async getIssueById(issueId) {
+  static async getIssueById(issueId, repoPath) {
     // Get issue by id
     const data = await octokit.rest.issues.get({
-      ...ownerRepo,
+      ...getOwnerRepo(repoPath),
       issue_number: issueId,
     });
 
     return data.data
   }
 
-  static async getIssueComments(issueId) {
+  static async getIssueComments(issueId, repoPath) {
     // Get Issue comments
     const data = await octokit.rest.issues.listComments({
-      ...ownerRepo,
+      ...getOwnerRepo(repoPath),
       issue_number: issueId,
     });
 
     return data.data
   }
 
-  static async getIssueForks() {
+  static async getIssueForks(repoPath) {
     // Get Issue comments
     const data = await octokit.rest.repos.listForks({
-      ...ownerRepo,
+      ...getOwnerRepo(repoPath),
+      per_page: 100,
     });
 
     return data.data
   }
 
-  static async createComment(issueId, comment) {
+  static async createComment(issueId, comment, repoPath) {
     // Create comment
     const data = await octokit.rest.issues.createComment({
-      ...ownerRepo,
+      ...getOwnerRepo(repoPath),
       issue_number: issueId,
       body: comment,
     });
@@ -93,11 +101,13 @@ module.exports = class GithubService {
     return data.data;
   }
 
-  static async createPullRequest(title, description, username) {
+  static async createPullRequest(title, description, username, repoPath) {
     // Create pull request
+    const repo = getOwnerRepo(repoPath).repo;
     const data = await octokit.rest.pulls.create({
       accept: 'application/vnd.github.v3+json',
-      ...ownerRepo,
+      owner: ownerRepo.owner,
+      repo,
       title,
       body: description,
       head: `${username}:${githubConfig.githubMainBranch}`,
@@ -109,20 +119,20 @@ module.exports = class GithubService {
     return data.data;
   }
 
-  static async mergePullRequest(pullRequestNumber) {
+  static async mergePullRequest(pullRequestNumber, repoPath) {
     // Merge pull request
     const data = await octokit.rest.pulls.merge({
-      ...ownerRepo,
+      ...getOwnerRepo(repoPath),
       pull_number: pullRequestNumber
     });
 
     return data.data;
   }
 
-  static async getPullRequestCommits(pullRequestNumber) {
+  static async getPullRequestCommits(pullRequestNumber, repoPath) {
     // Merge pull request
     const data = await octokit.rest.pulls.listCommits({
-      ...ownerRepo,
+      ...getOwnerRepo(repoPath),
       pull_number: pullRequestNumber
     });
 
@@ -198,26 +208,13 @@ module.exports = class GithubService {
       })
   }
 
-  static async getAllIssues() {
-    return octokit.rest.issues.listForRepo({
-      owner: githubConfig.githubOwner,
-      repo: githubConfig.githubRepo,
-      state: `all`
-    })
-      .then(data => data.data)
-      .catch(e => {
-        console.error(e);
-        return []
+  static async getForkedRepo(ghhandler, repo){
+    return octokit.rest.repos.get({repo: repo.split(`/`)[1], owner: ghhandler,})
+      .then(({data}) => data)
+      .catch((e) => {
+        console.error(`Failed to get repos for ${ghhandler} ${repo}`, e.message);
+        return null;
       })
-  }
-
-  static async getForkedRepo(ghhandler){
-    const data = await octokit.rest.repos.get({
-      ...ownerRepo,
-      owner: ghhandler,
-    })
-
-    return data.data
   }
 
   static async getForksAmountFor(repo = ``) {
@@ -248,5 +245,14 @@ module.exports = class GithubService {
     return octokit.rest.users.getByUsername({username})
       .then(({data}) => data)
       .catch(() => null);
+  }
+
+  static async repoExists(owner, repo) {
+    return octokit.rest.repos.get({owner, repo})
+      .then(({data}) => !!data?.id)
+      .catch(e => {
+        console.error(`Error checking for ${owner}/${repo} `)
+        return false;
+      });
   }
 };

@@ -11,16 +11,18 @@
     "prestart": "npm run migrate",
     "dev": "nodemon ./bin/www",
     "start": "node ./bin/www",
-    "migrate": "node_modules/.bin/sequelize db:migrate",
-    "migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
+    "migrate": "sequelize db:migrate",
+    "migrate:undo": "sequelize db:migrate:undo",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@octokit/auth-app": "^3.6.1",
     "axios": "^0.21.4",
     "bepro-js": "github:bepronetwork/bepro-js#master",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
+    "date-fns": "^2.25.0",
     "dayjs": "^1.10.6",
     "debug": "^4.3.1",
     "dotenv": "^10.0.0",
@@ -30,7 +32,8 @@
     "octokit": "^1.0.5",
     "pg": "^8.6.0",
     "pg-hstore": "^2.3.3",
-    "sequelize": "^6.6.2",
-    "sequelize-cli": "^6.2.0"
+    "sequelize": "~6.6.2",
+    "sequelize-cli": "~6.2.0",
+    "web3": "^2.0.0-alpha.1"
   }
 }
