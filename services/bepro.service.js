@@ -156,7 +156,7 @@ module.exports = class BeproService {
         resolve(true);
       })
 
-      BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`close`, error(`CurrentProvider`, this.listenToEvents))
+      BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`close`, error(`CurrentProvider`, BeproService.listenToEvents))
       BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`error`, error(`CurrentProvider`))
 
       console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
