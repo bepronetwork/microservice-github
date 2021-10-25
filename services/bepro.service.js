@@ -22,7 +22,7 @@ module.exports = class BeproService {
         test: !networkConfig.prod,
         opt: {
           web3Connection: networkConfig.web3Connection,
-          // privateKey: networkConfig.privateKey,
+          privateKey: networkConfig.privateKey,
         },
       });
 
