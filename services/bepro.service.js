@@ -104,13 +104,13 @@ module.exports = class BeproService {
 
     return new Promise(async (resolve) => {
       BeproService.starting = +new Date();
-      const started = await this.start();
+      const started = await BeproService.start();
       if (!started) return;
 
       const contract = BeproService.beproNetwork.getWeb3Contract();
 
       const error = (of = ``, reListen = () => {}) => (error, ev = null) => {
-        console.log(`${of}\n`, `Error: ${!!error}`, error, `\n`, !ev && `No data` || ev);
+        console.log(`${of}\n`, `Error: ${!!error}`, error?.message, `\n`, !ev && `No data` || ev);
         if (error?.code === 1006)
           reListen();
       }
