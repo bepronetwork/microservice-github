@@ -3,6 +3,7 @@ const models = require('./models');
 const { Op } = require('sequelize');
 const GithubService = require('./services/github.service');
 const dayjs = require('dayjs');
+const {subDays} = require('date-fns')
 
 async function changeDraftedIssues() {
   console.log('##### Checking draft issues to move to open');
@@ -10,7 +11,7 @@ async function changeDraftedIssues() {
     {
       where: {
         createdAt: {
-          [Op.lt]: dayjs().subtract(3, 'day').toDate(),
+          [Op.lt]: subDays(+new Date(), 3).toISOString(),
         },
         state: 'draft',
       },
