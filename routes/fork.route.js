@@ -4,9 +4,29 @@ const asyncMiddleware = require('../middlewares/async.middleware');
 const GithubService = require('../services/github.service');
 const models = require('../models');
 
+const dCache = {}
+const TTL = 60 * 1000;
+
 /* GET Forks for issue. */
 router.get('/', asyncMiddleware(async (req, res, next) => {
-  const forks = await GithubService.getIssueForks();
+  const repos = await models.repositories.findAll({raw: true});
+
+  const fetchForks = repos.map(async(repo) => {
+      if (dCache[repo.id]?.lastUpdated && +new Date() - dCache[repo.id]?.lastUpdated <= TTL)
+        return dCache[repo.id]?.data
+
+      const forks = await GithubService.getIssueForks(repo.githubPath);
+      
+      dCache[repo.id] = {
+        id: repo.id,
+        lastUpdated: +new Date(),
+        data: forks,
+      };
+      
+      return forks;
+    })
+
+  const forks = [].concat(...await Promise.all(fetchForks))
 
   return res.json(forks);
 }));
