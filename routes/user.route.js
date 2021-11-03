@@ -57,12 +57,15 @@ router.patch('/connect/:githubHandle', asyncMiddleware(async (req, res, next) =>
     ? {githubHandle: req.params.githubHandle}
     : {address: req.body.address};
 
-  const user = await models.user.findOne({where});
+  let user = await models.user.findOne({where});
+
+  if (user === null)
+    user = await models.user.findOne({where: {address: req.body.address}})
 
   if (user === null)
     return res.status(400).json(`Spam Error: user not found`);
 
-  if (user.address && !req.body.migrate)
+  if (user.address && (!req.body.migrate && user.githubHandle))
     return res.status(409).json(`Spam Error: user already joined`);
 
   if (!+(await BeproService.beproNetwork.web3.eth.getBalance(req.body.address)))
