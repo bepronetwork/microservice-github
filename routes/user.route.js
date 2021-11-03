@@ -30,7 +30,7 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
   const find = await models.user.findOne({
     where: {
       githubLogin: req.body.githubLogin
-    }
+    }, raw: true,
   })
 
   if (!find) {
@@ -40,33 +40,36 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
       accessToken: req.body.accessToken,
     });
 
-    timers[req.body.githubHandle] = setTimeout(async () => await models.user.destroy({where: {githubLogin: req.body.githubLogin}}), 60*1000)
-  } else
+    timers[req.body.githubLogin] = setTimeout(async () => await models.user.destroy({where: {githubLogin: req.body.githubLogin}}), 60*1000)
+  } else {
+    if (find.address)
+      return res.status(302).json(`migrate user, please`);
     return res.status(409).json(`already exists`);
+  }
+
 
   return res.status(200).json('ok');
 }));
 
 /* PATCH adding address to user with githubHandle */
 router.patch('/connect/:githubHandle', asyncMiddleware(async (req, res, next) => {
-  const user = await models.user.findOne(
-    {
-      where: {
-        githubHandle: req.params.githubHandle
-      },
-    });
+  const where = !req.body.migrate
+    ? {githubHandle: req.params.githubHandle}
+    : {address: req.body.address};
+
+  const user = await models.user.findOne({where});
 
   if (user === null)
     return res.status(400).json(`Spam Error: user not found`);
 
-  if (user.address)
+  if (user.address && !req.body.migrate)
     return res.status(409).json(`Spam Error: user already joined`);
 
   if (!+(await BeproService.beproNetwork.web3.eth.getBalance(req.body.address)))
     return res.status(422).json(`Spam Error: Address has to hold Native Currency`);
 
    await user.update({
-      githubHandle: user.githubHandle,
+      githubHandle: user.githubHandle || req.params.githubHandle,
       githubLogin: user.githubLogin,
       address: req.body.address,
       accessToken: req.body.accessToken,
@@ -88,6 +91,12 @@ router.get('/address/:address', asyncMiddleware(async (req, res, next) => {
     });
 
   return res.json(user);
+}));
+
+router.get(`/github/:login`, asyncMiddleware(async (req, res, next) => {
+  const user = await models.user.findOne({where: {githubLogin: req.params.login}, raw: true});
+
+  return res.status(!!user ? 200 : 404).json(user);
 }));
 
 /* GET get number of developers connected. */
