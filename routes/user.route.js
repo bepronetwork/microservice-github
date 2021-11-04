@@ -18,14 +18,14 @@ router.post('/connect', asyncMiddleware(async (req, res, next) => {
   if (!githubUser)
     return res.status(404).json(`Spam Error: User not found on Github`);
 
-  const {created_at, public_repos} = githubUser;
-  const moreThanADay = (+new Date() - +new Date(created_at)) / (24 * 60 * 60 * 1000) >= 7;
+  // const {created_at, public_repos} = githubUser;
+  // const moreThanADay = (+new Date() - +new Date(created_at)) / (24 * 60 * 60 * 1000) >= 7;
 
-  if (!moreThanADay)
-    return res.status(422).json(`Spam Error: Github account has to be older than 7 days`);
+  // if (!moreThanADay)
+  //   return res.status(422).json(`Spam Error: Github account has to be older than 7 days`);
 
-  if (!public_repos)
-    return res.status(422).json(`Spam Error: Github Account has to have at least 1 public repository`);
+  // if (!public_repos)
+  //   return res.status(422).json(`Spam Error: Github Account has to have at least 1 public repository`);
 
   const find = await models.user.findOne({
     where: {
@@ -68,8 +68,8 @@ router.patch('/connect/:githubHandle', asyncMiddleware(async (req, res, next) =>
   if (user.address && (!req.body.migrate && user.githubHandle))
     return res.status(409).json(`Spam Error: user already joined`);
 
-  if (!+(await BeproService.beproNetwork.web3.eth.getBalance(req.body.address)))
-    return res.status(422).json(`Spam Error: Address has to hold Native Currency`);
+  // if (!+(await BeproService.beproNetwork.web3.eth.getBalance(req.body.address)))
+  //   return res.status(422).json(`Spam Error: Address has to hold Native Currency`);
 
    await user.update({
       githubHandle: user.githubHandle || req.params.githubHandle,
