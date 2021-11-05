@@ -3,7 +3,8 @@ const githubConfig = require('../config/github.config');
 const models = require(`../models`);
 
 const dCache = {}
-const TTL = 60 * 1000;
+
+const TTL = 1 * 60 * 60 * 1000;
 
 function getId(issue) {
   return issue?.issueId || [issue.repository_id, issue.githubId].join(`/`)
