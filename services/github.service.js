@@ -19,6 +19,11 @@ const githubForkStats = {
   data: {},
 }
 
+const LastPR = {
+  lastUpdated: 0,
+  data: {},
+}
+
 function getOwnerRepo(repoPath) {
   const [owner, repo] = (repoPath || ownerRepoPath).split(`/`);
   return ({owner, repo});
@@ -145,11 +150,22 @@ module.exports = class GithubService {
     const sortMerged = ({merged_at: a}, {merged_at: b}) =>
       ((a = new Date(a), b = new Date(b)), a > b ? -1 : a < b ? 1 : 0);
 
+    if (LastPR.lastUpdated && +new Date() - LastPR.lastUpdated <= GITHUB_STATS_TTL)
+      return LastPR.data;
+
+
     return octokit.rest.pulls.list({
       owner: githubConfig.githubOwner,
       repo: githubConfig.githubRepo,
       state: `closed`
-    }).then((response) => response?.data?.filter(filterMerged).sort(sortMerged).slice(0, amount))
+    }).then((response) => {
+      const data = response?.data?.filter(filterMerged).sort(sortMerged).slice(0, amount);
+
+      LastPR.lastUpdated = +new Date();
+      LastPR.data = data;
+
+      return data;
+    })
   }
 
   /**
