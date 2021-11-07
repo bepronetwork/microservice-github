@@ -3,6 +3,7 @@ const networkConfig = require('../config/network.config');
 const models = require('../models');
 const GithubService = require('../services/github.service');
 const Bus = require("../middlewares/event-bus.middleware");
+const CronJob = require('cron').CronJob;
 
 module.exports = class BeproService {
 
@@ -49,6 +50,19 @@ module.exports = class BeproService {
 
     issue.state = 'closed';
     await issue.save();
+  }
+
+  static async updateBlockNumber(eventName, lastBlockNumber){
+    await models.eventsLogs
+    .findOne({ where: {event_name: eventName} })
+    .then(function(obj) {
+        if(obj) {
+            return obj.update({event_name: eventName, lastBlockNumber});
+        }
+        else {
+            return models.eventsLogs.create({event_name: eventName, lastBlockNumber});
+        }
+    })
   }
 
   static async readRedemIssue(event) {
@@ -114,27 +128,68 @@ module.exports = class BeproService {
       }
 
       const connecting = +new Date()
+      const eventsLogs = await models.eventsLogs.findAll({raw: true})
       const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
+      const findBlock = (eventName = ``) => eventsLogs?.find((i)=> i.event_name === eventName)?.lastBlockNumber + 1 || 0;
 
-      contract.events.CloseIssue({}, error(`closeIssue`))
-        .on(`connected`,() => onConnected(`CloseIssue`))
-        .on(`error`, error(`CloseIssue`))
-        .on(`data`, (ev) => BeproService.readCloseIssue(ev));
+      const events = [
+        {
+          event_name: 'CloseIssue',
+          action: BeproService.readCloseIssue,
+        },
+        {
+          event_name: 'RedeemIssue',
+          action: BeproService.readRedemIssue,
+        },
+        {
+          event_name: 'RecognizedAsFinished',
+          action: BeproService.readRecognizeAsFinished,
+        },
+        {
+          event_name:  'MergeProposalCreated',
+          action: BeproService.readMergeProposalCreated,
+        }
+      ]
+      
+      new CronJob({
+        cronTime: '*/30 * * * * *',
+        onTick: async () => {
+          console.log('Run Cron');
+          events.forEach(({event_name, action})=>{
+            let fromBlock = findBlock(event_name);
+            contract.getPastEvents(event_name,{
+              fromBlock,
+              toBlock: 'latest'
+            }).then(async(evs)=> {
+                if(!evs || evs.length < 1) return;
+                onConnected(event_name)
+                const lastBlock = evs[evs?.length-1]?.blockNumber || 0;
+    
+                if(fromBlock <= lastBlock){
+                  evs.map(ev => action && action(ev))
+                  await BeproService.updateBlockNumber(event_name, lastBlock)
+                }
+              }).catch(()=> console.error(`Err ${event_name}`))
+          })
+        },
+        start: true,
+        timeZone: 'Europe/Lisbon'
+      }).start()
 
-      contract.events.RedeemIssue({}, error(`redeemIssue`))
-        .on(`connected`, () => onConnected(`RedeemIssue`))
-        .on(`error`, error(`RedeemIssue`))
-        .on(`data`, (ev) => BeproService.readRedemIssue(ev));
+      // contract.events.RedeemIssue({}, error(`redeemIssue`))
+      //   .on(`connected`, () => onConnected(`RedeemIssue`))
+      //   .on(`error`, error(`RedeemIssue`))
+      //   .on(`data`, (ev) => BeproService.readRedemIssue(ev));
 
-      contract.events.RecognizedAsFinished({}, error(`RecognizedAsFinished`))
-        .on(`connected`, () => onConnected(`RecognizedAsFinished`))
-        .on(`error`, error(`RecognizedAsFinished`))
-        .on(`data`, (ev) => BeproService.readRecognizeAsFinished(ev));
+      // contract.events.RecognizedAsFinished({}, error(`RecognizedAsFinished`))
+      //   .on(`connected`, () => onConnected(`RecognizedAsFinished`))
+      //   .on(`error`, error(`RecognizedAsFinished`))
+      //   .on(`data`, (ev) => BeproService.readRecognizeAsFinished(ev));
 
-      contract.events.MergeProposalCreated({}, error(`MergeProposalCreated`))
-        .on(`connected`, () => onConnected(`MergeProposalCreated`))
-        .on(`error`, error(`MergeProposalCreated`))
-        .on(`data`, (ev) => BeproService.readMergeProposalCreated(ev));
+      // contract.events.MergeProposalCreated({}, error(`MergeProposalCreated`))
+      //   .on(`connected`, () => onConnected(`MergeProposalCreated`))
+      //   .on(`error`, error(`MergeProposalCreated`))
+      //   .on(`data`, (ev) => BeproService.readMergeProposalCreated(ev));
 
       BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`connect`, () => {
         onConnected(`CurrentProvider`);
