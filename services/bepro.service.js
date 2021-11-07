@@ -165,7 +165,7 @@ module.exports = class BeproService {
                 onConnected(event_name)
                 const lastBlock = evs[evs?.length-1]?.blockNumber || 0;
                 if(fromBlock <= lastBlock){
-                  Promise.all(evs.map(async(ev) => action && await action(ev)))
+                  await Promise.all(evs.map(async(ev) => action && await action(ev)))
                   await BeproService.updateBlockNumber(event_name, lastBlock)
                 }
               }).catch(()=> console.error(`Err ${event_name}`))
