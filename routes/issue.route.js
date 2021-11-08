@@ -201,7 +201,7 @@ router.get('/mergeproposal/:scMergeId/:issueId', asyncMiddleware(async (req, res
 router.get('/:repoId/:id', asyncMiddleware(async (req, res, next) => {
   const issue = await models.issue.findOne(
     {
-      where: {issueId: [req.params.repoId, req.params.id].join(`/`)},
+      where: {issueId: [req.params.repoId, req.params.id].join(`/`)}, raw: true,
     });
 
   if (!issue)
