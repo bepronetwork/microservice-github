@@ -150,11 +150,13 @@ module.exports = class BeproService {
           action: BeproService.readMergeProposalCreated,
         }
       ]
-      
+      let taskRunning = false;
       new CronJob({
         cronTime: '*/30 * * * * *',
         onTick: async () => {
-          console.log('Run Cron');
+          if(taskRunning) return;
+          console.log('Runing Cron');
+          taskRunning = true;
           events.forEach(({event_name, action})=>{
             let fromBlock = findBlock(event_name);
             contract.getPastEvents(event_name,{
@@ -165,10 +167,11 @@ module.exports = class BeproService {
                 onConnected(event_name)
                 const lastBlock = evs[evs?.length-1]?.blockNumber || 0;
                 if(fromBlock <= lastBlock){
-                  await Promise.all(evs.map(async(ev) => action && await action(ev)))
                   await BeproService.updateBlockNumber(event_name, lastBlock)
+                  await Promise.all(evs.map(async(ev) => action && await action(ev)))
                 }
               }).catch(()=> console.error(`Err ${event_name}`))
+              .finally(()=> taskRunning = false)
           })
         },
         start: true,
