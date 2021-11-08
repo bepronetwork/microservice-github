@@ -128,9 +128,9 @@ module.exports = class BeproService {
       }
 
       const connecting = +new Date()
-      const eventsLogs = await models.eventsLogs.findAll({raw: true})
+      const getEventsLogs = async () => await models.eventsLogs.findAll({raw: true});
       const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
-      const findBlock = (eventName = ``) => eventsLogs?.find((i)=> i.event_name === eventName)?.lastBlockNumber + 1 || 0;
+      const findBlock = (arr, eventName = ``) => arr?.find((i)=> i.event_name === eventName)?.lastBlockNumber + 1 || 0;
 
       const events = [
         {
@@ -157,8 +157,9 @@ module.exports = class BeproService {
           if(taskRunning) return;
           console.log('Runing Cron');
           taskRunning = true;
+          const eventsLogs = await getEventsLogs();
           events.forEach(({event_name, action})=>{
-            let fromBlock = findBlock(event_name);
+            let fromBlock = findBlock(eventsLogs, event_name);
             contract.getPastEvents(event_name,{
               fromBlock,
               toBlock: 'latest'
