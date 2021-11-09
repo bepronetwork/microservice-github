@@ -5,6 +5,8 @@ const GithubService = require('../services/github.service');
 const Bus = require("../middlewares/event-bus.middleware");
 const CronJob = require('cron').CronJob;
 
+require('dotenv').config();
+
 module.exports = class BeproService {
 
   static beproNetwork;
@@ -53,16 +55,21 @@ module.exports = class BeproService {
   }
 
   static async updateBlockNumber(eventName, lastBlockNumber){
-    await models.eventsLogs
-    .findOne({ where: {event_name: eventName} })
-    .then(function(obj) {
-        if(obj) {
-            return obj.update({event_name: eventName, lastBlockNumber});
-        }
-        else {
-            return models.eventsLogs.create({event_name: eventName, lastBlockNumber});
-        }
-    })
+    try {
+      await models.eventsLogs
+      .findOne({ where: {event_name: eventName} })
+      .then(function(obj) {
+          if(obj) {
+              return obj.update({event_name: eventName, lastBlockNumber});
+          }
+          else {
+              return models.eventsLogs.create({event_name: eventName, lastBlockNumber});
+          }
+      })  
+    } catch (err) {
+      console.error(`Can't update LastBlock Number`, err)
+    }
+    
   }
 
   static async readRedemIssue(event) {
@@ -110,74 +117,125 @@ module.exports = class BeproService {
     Bus.emit(`mergeProposal:created:${user?.githubLogin}:${scIssueId}:${pr?.githubId}`, merge)
   }
 
+  static async syncConstractAllPastEvents(){
+    const earliest = Number(process.env.CONTRACT_FIRST_BLOCK_NUMBER);
+    const lastestBlock = await this.beproNetwork.web3.eth.getBlockNumber();
+
+    const pageSize = 250;
+    const totalBlocks = lastestBlock - earliest;
+
+    let totalPages = Math.ceil(totalBlocks / pageSize);
+    let startBlock = earliest;
+    
+    function cutDown(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    console.time('request')
+    for (var i = 0; i < totalPages; i++) {
+      let endBlock = startBlock + pageSize;
+      await this.syncContractPastEvents(startBlock, endBlock)  
+      cutDown(5000)
+      startBlock = endBlock + 1;
+    }
+    console.timeEnd('request')
+  }
+
+  static async syncContractPastEvents(startBlock, endBlock = 'latest'){
+    console.log(startBlock, endBlock)
+    const contract = this.beproNetwork.getWeb3Contract();
+    const connecting = +new Date()
+    const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
+    const getEventsLogs = async (event_name) => {
+      const eventLog = await models.eventsLogs.findOne({where:{event_name}, raw: true})
+      return eventLog.lastBlockNumber;
+    }
+    const findBlock = async (eventName = ``) => await getEventsLogs(eventName) || process.env.CONTRACT_FIRST_BLOCK_NUMBER || 0;
+
+    const events = [
+      {
+        event_name: 'CloseIssue',
+        action: this.readCloseIssue,
+      },
+      {
+        event_name: 'RedeemIssue',
+        action: this.readRedemIssue,
+      },
+      {
+        event_name: 'RecognizedAsFinished',
+        action: this.readRecognizeAsFinished,
+      },
+      {
+        event_name:  'MergeProposalCreated',
+        action: this.readMergeProposalCreated,
+      }
+    ]
+
+    const getPastEvents = events.map(({event_name, action})=> 
+      new Promise(async(resolve, reject) => {
+        let fromBlock = startBlock || await findBlock(event_name);
+        console.log(fromBlock, endBlock)
+        await contract.getPastEvents(event_name, {
+          fromBlock: fromBlock,
+          toBlock: endBlock,
+        })
+        .then(async(evs)=> {
+            console.log(event_name, evs)
+            if(!evs || evs.length < 1) return;
+            onConnected(event_name)
+            const lastBlock = evs[evs?.length-1]?.blockNumber || 0;
+            if(fromBlock <= lastBlock){
+              await BeproService.updateBlockNumber(event_name, lastBlock)
+              // await Promise.all(evs.map(async(ev) => action && await action(ev)))
+            }
+        })
+        .catch((err)=> {
+          console.error(`Err ${event_name}`, err)
+        })
+        resolve(true)
+    }))
+    
+    
+    return await Promise.all(getPastEvents)
+    
+  }
+
   static async listenToEvents() {
     if (BeproService.starting)
       return;
-
+    
     return new Promise(async (resolve) => {
+      
       BeproService.starting = +new Date();
       const started = await this.start();
       if (!started) return;
-
-      const contract = BeproService.beproNetwork.getWeb3Contract();
 
       const error = (of = ``) => (error, ev = null) => {
         console.log(`${of}\n`, `Error: ${!!error}`, error, `\n`, !ev && `No data` || ev);
         if (error?.code === 1006)
           BeproService.listenToEvents();
       }
-
       const connecting = +new Date()
-      const getEventsLogs = async () => await models.eventsLogs.findAll({raw: true});
       const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
-      const findBlock = (arr, eventName = ``) => arr?.find((i)=> i.event_name === eventName)?.lastBlockNumber + 1 || 0;
 
-      const events = [
-        {
-          event_name: 'CloseIssue',
-          action: BeproService.readCloseIssue,
-        },
-        {
-          event_name: 'RedeemIssue',
-          action: BeproService.readRedemIssue,
-        },
-        {
-          event_name: 'RecognizedAsFinished',
-          action: BeproService.readRecognizeAsFinished,
-        },
-        {
-          event_name:  'MergeProposalCreated',
-          action: BeproService.readMergeProposalCreated,
-        }
-      ]
-      let taskRunning = false;
-      new CronJob({
-        cronTime: '*/30 * * * * *',
-        onTick: async () => {
-          if(taskRunning) return;
-          console.log('Runing Cron');
-          taskRunning = true;
-          const eventsLogs = await getEventsLogs();
-          events.forEach(({event_name, action})=>{
-            let fromBlock = findBlock(eventsLogs, event_name);
-            contract.getPastEvents(event_name,{
-              fromBlock,
-              toBlock: 'latest'
-            }).then(async(evs)=> {
-                if(!evs || evs.length < 1) return;
-                onConnected(event_name)
-                const lastBlock = evs[evs?.length-1]?.blockNumber || 0;
-                if(fromBlock <= lastBlock){
-                  await BeproService.updateBlockNumber(event_name, lastBlock)
-                  await Promise.all(evs.map(async(ev) => action && await action(ev)))
-                }
-              }).catch(()=> console.error(`Err ${event_name}`))
-              .finally(()=> taskRunning = false)
-          })
-        },
-        start: true,
-        timeZone: 'Europe/Lisbon'
-      }).start()
+      // this.syncConstractAllPastEvents();
+
+      // await this.syncContractPastEvents();
+      // console.log(result)
+      // console.log(result, '<')
+      // console.log('>>>', BeproService.beproNetwork.web3.eth.Contract.defaultBlock)
+      // let taskRunning = false;
+      // new CronJob({
+      //   cronTime: '*/30 * * * * *',
+      //   onTick: async () => {
+      //     if(taskRunning) return;
+      //     console.log('Runing Cron', new Date());
+      //     taskRunning = true;
+          
+      //   },
+      //   start: true,
+      //   timeZone: 'Europe/Lisbon'
+      // }).start()
 
       // contract.events.RedeemIssue({}, error(`redeemIssue`))
       //   .on(`connected`, () => onConnected(`RedeemIssue`))
