@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const asyncMiddleware = require('../middlewares/async.middleware');
-const BeproService = require('../services/bepro.service');
+const Network = require('bepro-js').Network;
 const GithubService = require('../services/github.service');
 const axios = require(`axios`);
+const networkConfig = require("../config/network.config");
 
 /* GET home page. */
 router.get('/', asyncMiddleware((req, res, next) => {
@@ -11,9 +12,15 @@ router.get('/', asyncMiddleware((req, res, next) => {
 }));
 
 router.get('/networkstats', asyncMiddleware(async (req, res, next) => {
-  const openIssues = await BeproService.getOpenIssues();
-  const beprosStaked = await BeproService.getBEPROStaked();
-  const tokensStaked = await BeproService.getTokensStaked();
+
+  const opt = {opt: {web3Connection: networkConfig.web3Connection,  privateKey: networkConfig.privateKey}, test: true,};
+  const network = new Network({contractAddress: networkConfig.contractAddress, ...opt});
+
+  await network.start();
+
+  const openIssues = await network.getAmountofIssuesOpened();
+  const beprosStaked = await network.getBEPROStaked();
+  const tokensStaked = await network.getTokensStaked();
 
   res.json({
     openIssues,
