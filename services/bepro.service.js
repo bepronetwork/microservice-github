@@ -132,48 +132,48 @@ module.exports = class BeproService {
       const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
       const findBlock = (eventName = ``) => eventsLogs?.find((i)=> i.event_name === eventName)?.lastBlockNumber + 1 || 0;
 
-      const events = [
-        {
-          event_name: 'CloseIssue',
-          action: BeproService.readCloseIssue,
-        },
-        {
-          event_name: 'RedeemIssue',
-          action: BeproService.readRedemIssue,
-        },
-        {
-          event_name: 'RecognizedAsFinished',
-          action: BeproService.readRecognizeAsFinished,
-        },
-        {
-          event_name:  'MergeProposalCreated',
-          action: BeproService.readMergeProposalCreated,
-        }
-      ]
-      
-      new CronJob({
-        cronTime: '*/30 * * * * *',
-        onTick: async () => {
-          console.log('Run Cron');
-          events.forEach(({event_name, action})=>{
-            let fromBlock = findBlock(event_name);
-            contract.getPastEvents(event_name,{
-              fromBlock,
-              toBlock: 'latest'
-            }).then(async(evs)=> {
-                if(!evs || evs.length < 1) return;
-                onConnected(event_name)
-                const lastBlock = evs[evs?.length-1]?.blockNumber || 0;
-                if(fromBlock <= lastBlock){
-                  await Promise.all(evs.map(async(ev) => action && await action(ev)))
-                  await BeproService.updateBlockNumber(event_name, lastBlock)
-                }
-              }).catch(()=> console.error(`Err ${event_name}`))
-          })
-        },
-        start: true,
-        timeZone: 'Europe/Lisbon'
-      }).start()
+      // const events = [
+      //   {
+      //     event_name: 'CloseIssue',
+      //     action: BeproService.readCloseIssue,
+      //   },
+      //   {
+      //     event_name: 'RedeemIssue',
+      //     action: BeproService.readRedemIssue,
+      //   },
+      //   {
+      //     event_name: 'RecognizedAsFinished',
+      //     action: BeproService.readRecognizeAsFinished,
+      //   },
+      //   {
+      //     event_name:  'MergeProposalCreated',
+      //     action: BeproService.readMergeProposalCreated,
+      //   }
+      // ]
+      //
+      // new CronJob({
+      //   cronTime: '*/30 * * * * *',
+      //   onTick: async () => {
+      //     console.log('Run Cron');
+      //     events.forEach(({event_name, action})=>{
+      //       let fromBlock = findBlock(event_name);
+      //       contract.getPastEvents(event_name,{
+      //         fromBlock,
+      //         toBlock: 'latest'
+      //       }).then(async(evs)=> {
+      //           if(!evs || evs.length < 1) return;
+      //           onConnected(event_name)
+      //           const lastBlock = evs[evs?.length-1]?.blockNumber || 0;
+      //           if(fromBlock <= lastBlock){
+      //             await Promise.all(evs.map(async(ev) => action && await action(ev)))
+      //             await BeproService.updateBlockNumber(event_name, lastBlock)
+      //           }
+      //         }).catch(()=> console.error(`Err ${event_name}`))
+      //     })
+      //   },
+      //   start: true,
+      //   timeZone: 'Europe/Lisbon'
+      // }).start()
 
       // contract.events.RedeemIssue({}, error(`redeemIssue`))
       //   .on(`connected`, () => onConnected(`RedeemIssue`))
@@ -190,13 +190,13 @@ module.exports = class BeproService {
       //   .on(`error`, error(`MergeProposalCreated`))
       //   .on(`data`, (ev) => BeproService.readMergeProposalCreated(ev));
 
-      BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`connect`, () => {
-        onConnected(`CurrentProvider`);
-        resolve(true);
-      })
+      // BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`connect`, () => {
+      //   onConnected(`CurrentProvider`);
+      //   resolve(true);
+      // })
 
-      BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`close`, error(`CurrentProvider`))
-      BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`error`, error(`CurrentProvider`))
+      // BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`close`, error(`CurrentProvider`))
+      // BeproService.beproNetwork.web3Connection.web3.currentProvider.once(`error`, error(`CurrentProvider`))
 
       console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
       BeproService.starting = 0;
