@@ -106,7 +106,7 @@ module.exports = class BeproService {
     return new Promise(async (resolve) => {
       BeproService.starting = +new Date();
       const started = await BeproService.start();
-      if (!started) return;
+      if (!started) resolve(false);
 
       // const web3 = BeproService.beproNetwork.web3Connection.web3;
       // const provider = new web3.providers.WebsocketProvider(networkConfig.web3Connection, {
@@ -178,7 +178,7 @@ module.exports = class BeproService {
 
       console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
       BeproService.starting = 0;
-      return true;
+      resolve(true)
     })
   }
 
