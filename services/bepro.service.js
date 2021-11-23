@@ -123,61 +123,62 @@ module.exports = class BeproService {
       //
       // web3.setProvider(provider);
 
-      const contract = BeproService.beproNetwork.getWeb3Contract();
-
-      const error = (of = ``, reListen = () => {}) => (error, ev = null) => {
-        console.log(`${of}\n`, `Error: ${!!error}`, error?.message, `\n`, !ev && `No data` || ev);
-        if (error?.code === 1006)
-          reListen();
-      }
-
-      const connecting = +new Date()
-      const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
-
-      function listenCloseIssue() {
-        contract.events.CloseIssue({}, () => null)
-          .on(`connected`,() => onConnected(`CloseIssue`))
-          .on(`error`, error(`CloseIssue`))
-          .on(`data`, (ev) => BeproService.readCloseIssue(ev));
-      }
-
-      function listenRedeemIssue() {
-        contract.events.RedeemIssue({}, () => null)
-          .on(`connected`, () => onConnected(`RedeemIssue`))
-          .on(`error`, error(`RedeemIssue`))
-          .on(`data`, (ev) => BeproService.readRedemIssue(ev));
-      }
-
-      function listenRecognizeAsFinished() {
-        contract.events.RecognizedAsFinished({}, () => null)
-          .on(`connected`, () => onConnected(`RecognizedAsFinished`))
-          .on(`error`, error(`RecognizedAsFinished`))
-          .on(`data`, (ev) => BeproService.readRecognizeAsFinished(ev));
-      }
-
-      function listenMergeProposalCreated() {
-        contract.events.MergeProposalCreated({}, () => null)
-          .on(`connected`, () => onConnected(`MergeProposalCreated`))
-          .on(`error`, error(`MergeProposalCreated`))
-          .on(`data`, (ev) => BeproService.readMergeProposalCreated(ev));
-      }
-
-      listenCloseIssue();
-      listenRedeemIssue();
-      listenRecognizeAsFinished();
-      listenMergeProposalCreated();
-
-      BeproService.beproNetwork.web3Connection.web3.currentProvider
-        .once(`error`, error(`CurrentProvider`, BeproService.listenToEvents));
-
-      BeproService.beproNetwork.web3Connection.web3.currentProvider
-        .once(`connect`, () => {
-          onConnected(`CurrentProvider`);
-          resolve(true);
-        });
+      // const contract = BeproService.beproNetwork.getWeb3Contract();
+      //
+      // const error = (of = ``, reListen = () => {}) => (error, ev = null) => {
+      //   console.log(`${of}\n`, `Error: ${!!error}`, error?.message, `\n`, !ev && `No data` || ev);
+      //   if (error?.code === 1006)
+      //     reListen();
+      // }
+      //
+      // const connecting = +new Date()
+      // const onConnected = (eventName = ``) => console.log(`Connected ${eventName}`, +new Date() - connecting, `ms`);
+      //
+      // function listenCloseIssue() {
+      //   contract.events.CloseIssue({}, () => null)
+      //     .on(`connected`,() => onConnected(`CloseIssue`))
+      //     .on(`error`, error(`CloseIssue`))
+      //     .on(`data`, (ev) => BeproService.readCloseIssue(ev));
+      // }
+      //
+      // function listenRedeemIssue() {
+      //   contract.events.RedeemIssue({}, () => null)
+      //     .on(`connected`, () => onConnected(`RedeemIssue`))
+      //     .on(`error`, error(`RedeemIssue`))
+      //     .on(`data`, (ev) => BeproService.readRedemIssue(ev));
+      // }
+      //
+      // function listenRecognizeAsFinished() {
+      //   contract.events.RecognizedAsFinished({}, () => null)
+      //     .on(`connected`, () => onConnected(`RecognizedAsFinished`))
+      //     .on(`error`, error(`RecognizedAsFinished`))
+      //     .on(`data`, (ev) => BeproService.readRecognizeAsFinished(ev));
+      // }
+      //
+      // function listenMergeProposalCreated() {
+      //   contract.events.MergeProposalCreated({}, () => null)
+      //     .on(`connected`, () => onConnected(`MergeProposalCreated`))
+      //     .on(`error`, error(`MergeProposalCreated`))
+      //     .on(`data`, (ev) => BeproService.readMergeProposalCreated(ev));
+      // }
+      //
+      // listenCloseIssue();
+      // listenRedeemIssue();
+      // listenRecognizeAsFinished();
+      // listenMergeProposalCreated();
+      //
+      // BeproService.beproNetwork.web3Connection.web3.currentProvider
+      //   .once(`error`, error(`CurrentProvider`, BeproService.listenToEvents));
+      //
+      // BeproService.beproNetwork.web3Connection.web3.currentProvider
+      //   .once(`connect`, () => {
+      //     onConnected(`CurrentProvider`);
+      //     resolve(true);
+      //   });
 
       console.log(`Started!`, +new Date() - BeproService.starting, `ms`)
       BeproService.starting = 0;
+      return true;
     })
   }
 
