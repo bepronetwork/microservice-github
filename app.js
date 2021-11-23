@@ -49,7 +49,7 @@ BeproService.listenToEvents().then((started) => {
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(express.static(path.join(__dirname, 'public')));
 
-  //app.use(cors(CORS));
+  app.use(cors(CORS));
 
   app.use('/', indexRoutes);
   app.use('/issues', issuesRoutes);
